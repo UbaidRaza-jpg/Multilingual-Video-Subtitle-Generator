@@ -1,0 +1,7 @@
+faster-whisper
+googletrans==4.0.0-rc1
+moviepy
+ffmpeg-python
+fastapi
+uvicorn
+streamlit
