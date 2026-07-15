@@ -53,10 +53,30 @@ A free-tier web application that transcribes, translates, and hardcodes subtitle
 
 ### Project Structure
 
-- `core_engine.py`: Contains the core logic for transcribing, translating, and embedding subtitles.
-- `requirements.txt`: Python package requirements.
-- `.env`: Environment configuration file (API keys, path settings, etc.).
+- `core_engine.py`: Contains the core subtitle generation pipeline (transcription, translation, and burning subtitles via FFmpeg).
+- `main.py`: FastAPI asynchronous backend server exposing endpoints for upload, status polling, and downloads.
+- `app.py`: Interactive Streamlit frontend UI for easy video uploads and subtitle configuration.
+- `test_run.py`: Script to quickly test the subtitle engine locally via command-line.
+- `requirements.txt`: Project library dependencies.
+- `.env`: Environment variables configuration file.
+
+## How to Run
+
+### Step 1: Run the Backend API
+Start the FastAPI server on port 8000:
+```bash
+uvicorn main:app --reload
+```
+
+### Step 2: Run the Streamlit Frontend
+Start the Streamlit web interface (in a separate terminal window):
+```bash
+streamlit run app.py
+```
+
+Open your browser and navigate to `http://localhost:8501` to start generating subtitles!
 
 ## License
 
 This project is licensed under the MIT License.
+
