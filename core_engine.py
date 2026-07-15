@@ -262,20 +262,17 @@ def process_video(input_path: str, target_language: str) -> str:
         # Step 1: Transcribe
         transcribe_success = transcribe_video(input_path, raw_srt_path)
         if not transcribe_success:
-            print("Transcription failed.")
-            return ""
+            raise Exception("Transcription failed.")
             
         # Step 2: Translate
         translate_success = translate_srt(raw_srt_path, translated_srt_path, target_language)
         if not translate_success:
-            print("Translation failed.")
-            return ""
+            raise Exception("Translation failed.")
             
         # Step 3: Burn subtitles
         burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path)
         if not burn_success:
-            print("Subtitle burning failed.")
-            return ""
+            raise Exception("Subtitle burning failed.")
             
         # Clean up temporary SRT files
         try:
@@ -293,7 +290,17 @@ def process_video(input_path: str, target_language: str) -> str:
         print(f"An unexpected error occurred during video processing: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Clean up all temporary and output files on failure
+        for temp_file in [raw_srt_path, translated_srt_path, output_video_path]:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    print(f"Cleaned up partial file: {temp_file}")
+                except Exception as clean_err:
+                    print(f"Warning: Could not clean up {temp_file}: {clean_err}")
         return ""
+
 
 
 if __name__ == "__main__":
