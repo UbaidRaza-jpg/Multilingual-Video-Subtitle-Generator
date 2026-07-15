@@ -5,3 +5,7 @@ ffmpeg-python
 fastapi
 uvicorn
 streamlit
+python-multipart
+legacy-cgi
+
+

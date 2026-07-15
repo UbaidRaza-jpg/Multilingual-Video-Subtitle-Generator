@@ -152,3 +152,7 @@ outputs/
 output/
 temp_videos/
 uploads/
+temp_outputs/
+sample.mp4
+venv/
+
