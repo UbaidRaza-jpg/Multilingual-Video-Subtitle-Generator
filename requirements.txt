@@ -7,5 +7,7 @@ uvicorn
 streamlit
 python-multipart
 legacy-cgi
+python-dotenv
+
 
 

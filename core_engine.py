@@ -2,6 +2,10 @@ import os
 import sys
 import subprocess
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Delay importing heavier packages until they are actually needed
 # to ensure faster imports and check dependency presence safely.
@@ -112,51 +116,120 @@ def write_srt(blocks: List[Dict[str, str]], srt_path: str):
             f.write(f"{block['text']}\n\n")
 
 
+def translate_texts_deepl(texts: List[str], target_lang: str, api_key: str) -> List[str]:
+    """
+    Translate list of texts using the official DeepL API.
+    """
+    lang = target_lang.upper()
+    if lang == "EN":
+        lang = "EN-US"
+    elif lang == "PT":
+        lang = "PT-PT"
+    
+    url = "https://api-free.deepl.com/v2/translate" if api_key.endswith(":fx") else "https://api.deepl.com/v2/translate"
+    headers = {
+        "Authorization": f"DeepL-Auth-Key {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "text": texts,
+        "target_lang": lang
+    }
+    import requests
+    response = requests.post(url, headers=headers, json=payload, timeout=10)
+    response.raise_for_status()
+    result = response.json()
+    return [t["text"] for t in result["translations"]]
+
+
+def translate_texts_google_official(texts: List[str], target_lang: str, api_key: str) -> List[str]:
+    """
+    Translate list of texts using the official Google Cloud Translation API.
+    """
+    url = "https://translation.googleapis.com/language/translate/v2"
+    params = {"key": api_key}
+    payload = {
+        "q": texts,
+        "target": target_lang,
+        "format": "text"
+    }
+    import requests
+    response = requests.post(url, params=params, json=payload, timeout=10)
+    response.raise_for_status()
+    result = response.json()
+    return [t["translatedText"] for t in result["data"]["translations"]]
+
+
 def translate_srt(input_srt_path: str, output_srt_path: str, target_lang: str) -> bool:
     """
-    Translate an SRT file's text to target_lang using googletrans.
+    Translate an SRT file's text to target_lang using official DeepL / Google APIs
+    if configured, otherwise fall back to the free web googletrans scraper.
     """
     print(f"Translating {input_srt_path} to '{target_lang}'...")
     blocks = parse_srt(input_srt_path)
     if not blocks:
         print("No subtitles found to translate.")
-        # If input was empty, write empty output
         write_srt([], output_srt_path)
         return True
         
-    from googletrans import Translator
-    translator = Translator()
-    
-    # Translate in chunks to optimize requests and avoid rate limits
-    chunk_size = 40
-    translated_blocks = []
-    
     texts_to_translate = [b["text"] for b in blocks]
     translated_texts = []
     
-    for i in range(0, len(texts_to_translate), chunk_size):
-        chunk = texts_to_translate[i : i + chunk_size]
-        print(f"Translating chunk {i // chunk_size + 1} of {(len(texts_to_translate) - 1) // chunk_size + 1}...")
+    deepl_key = os.environ.get("DEEPL_API_KEY")
+    google_key = os.environ.get("GOOGLE_TRANSLATION_API_KEY")
+    
+    # Attempt 1: DeepL API
+    if deepl_key:
+        print("Detected DEEPL_API_KEY. Translating via DeepL API...")
         try:
-            translations = translator.translate(chunk, dest=target_lang)
-            if not isinstance(translations, list):
-                translations = [translations]
-            translated_texts.extend([t.text for t in translations])
+            chunk_size = 50
+            for i in range(0, len(texts_to_translate), chunk_size):
+                chunk = texts_to_translate[i : i + chunk_size]
+                translated_texts.extend(translate_texts_deepl(chunk, target_lang, deepl_key))
         except Exception as e:
-            print(f"Translation chunk failed: {e}. Retrying line by line...")
-            # Fallback line-by-line translation
-            for text in chunk:
-                try:
-                    if text.strip() == "":
-                        translated_texts.append("")
-                    else:
-                        t = translator.translate(text, dest=target_lang)
-                        translated_texts.append(t.text)
-                except Exception as e_line:
-                    print(f"Line translation failed for '{text}': {e_line}")
-                    translated_texts.append(text) # Fallback to original text
-                    
+            print(f"DeepL API translation failed: {e}. Falling back...")
+            translated_texts = []  # reset and fallback
+            
+    # Attempt 2: Google Official Translation API
+    if not translated_texts and google_key:
+        print("Detected GOOGLE_TRANSLATION_API_KEY. Translating via Google Cloud Official API...")
+        try:
+            chunk_size = 50
+            for i in range(0, len(texts_to_translate), chunk_size):
+                chunk = texts_to_translate[i : i + chunk_size]
+                translated_texts.extend(translate_texts_google_official(chunk, target_lang, google_key))
+        except Exception as e:
+            print(f"Google Cloud Official API translation failed: {e}. Falling back...")
+            translated_texts = []  # reset and fallback
+
+    # Attempt 3: Free googletrans fallback
+    if not translated_texts:
+        print("Using free googletrans scraper (default)...")
+        from googletrans import Translator
+        translator = Translator()
+        chunk_size = 40
+        for i in range(0, len(texts_to_translate), chunk_size):
+            chunk = texts_to_translate[i : i + chunk_size]
+            try:
+                translations = translator.translate(chunk, dest=target_lang)
+                if not isinstance(translations, list):
+                    translations = [translations]
+                translated_texts.extend([t.text for t in translations])
+            except Exception as e:
+                print(f"Translation chunk failed: {e}. Retrying line by line...")
+                for text in chunk:
+                    try:
+                        if text.strip() == "":
+                            translated_texts.append("")
+                        else:
+                            t = translator.translate(text, dest=target_lang)
+                            translated_texts.append(t.text)
+                    except Exception as e_line:
+                        print(f"Line translation failed for '{text}': {e_line}")
+                        translated_texts.append(text)  # fallback to original text
+                        
     # Reassemble blocks
+    translated_blocks = []
     for idx, block in enumerate(blocks):
         translated_text = translated_texts[idx] if idx < len(translated_texts) else block["text"]
         translated_blocks.append({
