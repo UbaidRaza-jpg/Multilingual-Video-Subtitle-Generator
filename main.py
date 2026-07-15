@@ -5,7 +5,7 @@ import asyncio
 import time
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
-from core_engine import process_video
+from core_engine import process_video, generate_subtitle_preview
 
 app = FastAPI(
     title="Multilingual Video Subtitle Generator API",
@@ -21,7 +21,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # In-memory database to store task statuses
-# task_id -> {"status": str, "output_path": str or None, "error": str or None, "target_language": str}
+# task_id -> {"status": str, "filepath": str, "output_path": str or None, "error": str or None, "target_language": str}
 tasks_db = {}
 
 
@@ -65,7 +65,7 @@ async def startup_event():
     asyncio.create_task(periodic_cleanup_task())
 
 
-def async_process_video_task(task_id: str, input_path: str, target_language: str):
+def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int):
     """
     Background worker that invokes the core video processing engine
     and updates the status database upon completion or failure.
@@ -73,8 +73,8 @@ def async_process_video_task(task_id: str, input_path: str, target_language: str
     try:
         tasks_db[task_id]["status"] = "processing"
         
-        # Run core processing
-        output_path = process_video(input_path, target_language)
+        # Run core processing with specified alignment position
+        output_path = process_video(input_path, target_language, alignment)
         
         if output_path and os.path.exists(output_path):
             tasks_db[task_id]["status"] = "completed"
@@ -97,15 +97,11 @@ def async_process_video_task(task_id: str, input_path: str, target_language: str
 
 
 @app.post("/upload")
-async def upload_video(
-    background_tasks: BackgroundTasks,
-    file: UploadFile = File(...),
-    target_language: str = Form(...)
-):
+async def upload_video(file: UploadFile = File(...)):
     """
-    Upload a video file to generate subtitled output.
-    Returns immediately with a task ID. Video processing is executed in the background.
-    Strictly limits upload size to 25MB.
+    Step 1: Upload a video file.
+    Saves the file to uploads/ directory and returns a video_id.
+    Strictly limits size to 25MB.
     """
     # Validate file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
@@ -116,10 +112,10 @@ async def upload_video(
         )
 
     # Generate a unique task ID
-    task_id = str(uuid.uuid4())
+    video_id = str(uuid.uuid4())
     
     # Save uploaded file to temp path with strict 25MB size limit
-    temp_filename = f"{task_id}{file_ext}"
+    temp_filename = f"{video_id}{file_ext}"
     temp_filepath = os.path.join(UPLOAD_DIR, temp_filename)
     
     MAX_SIZE = 25 * 1024 * 1024  # 25 MB
@@ -156,23 +152,85 @@ async def upload_video(
             detail=f"Failed to save uploaded file: {str(e)}"
         )
 
-    # Initialize task status in DB
-    tasks_db[task_id] = {
-        "status": "queued",
+    # Initialize video task in DB
+    tasks_db[video_id] = {
+        "status": "uploaded",
+        "filepath": temp_filepath,
+        "original_filename": file.filename,
         "output_path": None,
         "error": None,
-        "target_language": target_language,
-        "original_filename": file.filename
+        "target_language": None
     }
-
-    # Queue background task
-    background_tasks.add_task(async_process_video_task, task_id, temp_filepath, target_language)
 
     return {
-        "task_id": task_id,
-        "status": "queued",
-        "message": "Video uploaded successfully. Subtitle generation queued in the background."
+        "video_id": video_id,
+        "filename": file.filename,
+        "status": "uploaded"
     }
+
+
+@app.get("/preview/{video_id}")
+async def get_video_preview(video_id: str, alignment: int = 2):
+    """
+    Step 2: Generate and return a single JPEG frame at the 1-second mark 
+    with a sample subtitle burned at the chosen alignment (2=bottom, 8=top, 5=middle).
+    """
+    if video_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Video not found")
+        
+    task = tasks_db[video_id]
+    if not os.path.exists(task["filepath"]):
+        raise HTTPException(status_code=404, detail="Uploaded video file not found or already cleaned up.")
+        
+    preview_filename = f"preview_{video_id}_{alignment}.jpg"
+    preview_filepath = os.path.join(OUTPUT_DIR, preview_filename)
+    
+    success = generate_subtitle_preview(task["filepath"], alignment, preview_filepath)
+    if not success or not os.path.exists(preview_filepath):
+        raise HTTPException(status_code=500, detail="Failed to extract and burn preview frame.")
+        
+    return FileResponse(preview_filepath, media_type="image/jpeg")
+
+
+@app.post("/process/{video_id}")
+async def process_video_endpoint(
+    video_id: str,
+    background_tasks: BackgroundTasks,
+    target_language: str = Form(...),
+    alignment: int = Form(2)
+):
+    """
+    Step 3: Trigger the full background transcription and subtitle burning process.
+    """
+    if video_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Video not found")
+        
+    task = tasks_db[video_id]
+    if task["status"] in ["queued", "processing", "completed"]:
+        raise HTTPException(status_code=400, detail=f"Task is already in state '{task['status']}'")
+        
+    if not os.path.exists(task["filepath"]):
+        raise HTTPException(status_code=404, detail="Uploaded video file has been cleaned up. Please upload again.")
+
+    # Update task details to queued
+    task["status"] = "queued"
+    task["target_language"] = target_language
+
+    # Start task in background
+    background_tasks.add_task(
+        async_process_video_task, 
+        video_id, 
+        task["filepath"], 
+        target_language, 
+        alignment
+    )
+
+    return {
+        "task_id": video_id,
+        "status": "queued",
+        "message": f"Subtitle generation started in the background. Target language: '{target_language}'"
+    }
+
 
 
 
