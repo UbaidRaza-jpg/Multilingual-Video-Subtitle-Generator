@@ -80,30 +80,67 @@ if uploaded_file:
 if st.session_state.video_id:
     st.subheader("🛠️ Configure Subtitle Styling & Position")
     
-    # Subtitle alignments
-    ALIGNMENTS = {
-        "Bottom (Center)": 2,
-        "Top (Center)": 8,
-        "Middle (Center)": 5,
-        "Bottom Left": 1,
-        "Bottom Right": 3,
-        "Top Left": 7,
-        "Top Right": 9
-    }
+    col1, col2, col3 = st.columns(3)
     
-    align_name = st.selectbox(
-        "Select Subtitle Position:",
-        options=list(ALIGNMENTS.keys()),
-        index=0  # Defaults to Bottom (Center)
-    )
-    align_code = ALIGNMENTS[align_name]
+    with col1:
+        # Subtitle alignments
+        ALIGNMENTS = {
+            "Bottom (Center)": 2,
+            "Top (Center)": 8,
+            "Middle (Center)": 5,
+            "Bottom Left": 1,
+            "Bottom Right": 3,
+            "Top Left": 7,
+            "Top Right": 9
+        }
+        align_name = st.selectbox(
+            "Select Subtitle Position:",
+            options=list(ALIGNMENTS.keys()),
+            index=0  # Defaults to Bottom (Center)
+        )
+        align_code = ALIGNMENTS[align_name]
+        
+    with col2:
+        # Font Sizes
+        SIZES = {
+            "Small (16px)": 16,
+            "Medium (20px)": 20,
+            "Large (24px)": 24,
+            "Extra Large (32px)": 32
+        }
+        size_name = st.selectbox(
+            "Select Font Size:",
+            options=list(SIZES.keys()),
+            index=1  # Defaults to Medium (20px)
+        )
+        size_code = SIZES[size_name]
+        
+    with col3:
+        # Font Colors (ASS BGR format)
+        COLORS = {
+            "White": "&H00FFFFFF",
+            "Yellow": "&H0000FFFF",
+            "Cyan": "&H00FFFF00",
+            "Red": "&H000000FF",
+            "Green": "&H0000FF00",
+            "Blue": "&H00FF0000"
+        }
+        color_name = st.selectbox(
+            "Select Subtitle Color:",
+            options=list(COLORS.keys()),
+            index=0  # Defaults to White
+        )
+        color_code = COLORS[color_name]
     
     # Render Preview
-    preview_url = f"{API_URL}/preview/{st.session_state.video_id}?alignment={align_code}"
-    
-    with st.spinner("Loading position preview frame..."):
+    with st.spinner("Loading subtitle preview frame..."):
         try:
-            preview_resp = requests.get(preview_url)
+            params = {
+                "alignment": align_code,
+                "font_size": size_code,
+                "font_color": color_code
+            }
+            preview_resp = requests.get(f"{API_URL}/preview/{st.session_state.video_id}", params=params)
             if preview_resp.status_code == 200:
                 st.image(preview_resp.content, caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
             else:
@@ -112,7 +149,7 @@ if st.session_state.video_id:
             st.warning(f"Error loading preview frame: {e}")
             
     st.divider()
-    st.subheader("🌐 Select Language")
+    st.subheader("🌐 Select Language & Notifications")
     
     target_lang_name = st.selectbox(
         "Select Target Language for Subtitles:",
@@ -120,6 +157,12 @@ if st.session_state.video_id:
         index=0  # Defaults to Spanish
     )
     target_lang_code = LANGUAGES[target_lang_name]
+    
+    email_input = st.text_input(
+        "Email Address for Notifications (Optional):",
+        placeholder="Enter your email to receive a notification download link when complete.",
+        help="Ensure you configure the SMTP details in your .env file to enable emails."
+    )
     
     # Action Button
     if st.button("🚀 Generate Subtitles", use_container_width=True):
@@ -129,7 +172,10 @@ if st.session_state.video_id:
         try:
             payload = {
                 "target_language": target_lang_code,
-                "alignment": align_code
+                "alignment": align_code,
+                "font_size": size_code,
+                "font_color": color_code,
+                "email": email_input.strip() if email_input.strip() != "" else None
             }
             response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
             
@@ -219,4 +265,5 @@ if st.session_state.video_id:
 
 st.divider()
 st.caption("Powered by faster-whisper, googletrans, and ffmpeg locally.")
+
 

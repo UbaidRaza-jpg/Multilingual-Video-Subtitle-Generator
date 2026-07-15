@@ -263,12 +263,12 @@ def get_ffmpeg_executable() -> str:
     return "ffmpeg"
 
 
-def generate_subtitle_preview(video_path: str, alignment: int, output_image_path: str) -> bool:
+def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, font_color: str, output_image_path: str) -> bool:
     """
     Extracts a single frame from video_path at the 1-second mark and burns a 
-    sample subtitle onto it at the specified alignment.
+    sample subtitle onto it at the specified alignment, size, and color.
     """
-    print(f"Generating preview for {video_path} with alignment={alignment}...")
+    print(f"Generating preview for {video_path} with alignment={alignment}, size={font_size}, color={font_color}...")
     
     # Ensure temp directories exist
     os.makedirs("temp_outputs", exist_ok=True)
@@ -278,8 +278,8 @@ def generate_subtitle_preview(video_path: str, alignment: int, output_image_path
         f.write("1\n00:00:00,000 --> 00:00:05,000\n[Sample Subtitle Location Preview]\n\n")
         
     subtitles_filter = get_ffmpeg_subtitles_filter_path(dummy_srt)
-    # Append alignment force_style
-    subtitles_filter += f":force_style='Alignment={alignment},FontSize=20'"
+    # Append alignment, font size, and color force_style
+    subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color}'"
     
     ffmpeg_exe = get_ffmpeg_executable()
     
@@ -310,13 +310,13 @@ def generate_subtitle_preview(video_path: str, alignment: int, output_image_path
     return True
 
 
-def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: int = 2) -> bool:
+def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF") -> bool:
     """
-    Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment.
+    Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment, size, and color.
     """
-    print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}...")
+    print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}, size={font_size}, color={font_color}...")
     subtitles_filter = get_ffmpeg_subtitles_filter_path(srt_path)
-    subtitles_filter += f":force_style='Alignment={alignment}'"
+    subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color}'"
     ffmpeg_exe = get_ffmpeg_executable()
     
     # Try with audio copy first for speed/quality retention
@@ -352,7 +352,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     return True
 
 
-def process_video(input_path: str, target_language: str, alignment: int = 2) -> str:
+def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF") -> str:
     """
     Process the input video by transcribing it, translating the transcript,
     and hardcoding the translated subtitles.
@@ -361,11 +361,13 @@ def process_video(input_path: str, target_language: str, alignment: int = 2) -> 
         input_path (str): The local path to the input video file.
         target_language (str): The target language code to translate subtitles to.
         alignment (int): The subtitle position alignment code.
+        font_size (int): The subtitle font size.
+        font_color (str): The subtitle font color (ASS hex format).
 
     Returns:
         str: The path to the final output video file, or empty string on failure.
     """
-    print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment})")
+    print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment}, size: {font_size}, color: {font_color})")
     
     if not os.path.exists(input_path):
         print(f"Error: Input file {input_path} does not exist.")
@@ -391,8 +393,8 @@ def process_video(input_path: str, target_language: str, alignment: int = 2) -> 
         if not translate_success:
             raise Exception("Translation failed.")
             
-        # Step-3: Burn subtitles with selected alignment
-        burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path, alignment)
+        # Step-3: Burn subtitles with selected styles
+        burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path, alignment, font_size, font_color)
         if not burn_success:
             raise Exception("Subtitle burning failed.")
             
@@ -427,9 +429,13 @@ def process_video(input_path: str, target_language: str, alignment: int = 2) -> 
 
 if __name__ == "__main__":
     # Standard boilerplate entrypoint
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 5:
+        process_video(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5])
+    elif len(sys.argv) > 4:
+        process_video(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
+    elif len(sys.argv) > 3:
         process_video(sys.argv[1], sys.argv[2], int(sys.argv[3]))
     elif len(sys.argv) > 2:
         process_video(sys.argv[1], sys.argv[2])
     else:
-        print("Usage: python core_engine.py <input_video_path> <target_language> [alignment]")
+        print("Usage: python core_engine.py <input_video_path> <target_language> [alignment] [font_size] [font_color]")
