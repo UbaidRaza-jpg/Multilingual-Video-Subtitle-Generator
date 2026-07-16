@@ -271,11 +271,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Show running mode banner
+# Show running mode banner only if connected to backend API
 if st.session_state.use_api:
     st.success("Connected to backend API server.")
-else:
-    st.info("Running in Standalone Mode (processing will run directly inside this app instance).")
 
 st.divider()
 
@@ -434,7 +432,7 @@ if st.session_state.video_id:
     target_lang_name = st.selectbox(
         "Select Target Language for Subtitles:",
         options=list(LANGUAGES.keys()),
-        index=0  # Defaults to Spanish
+        index=list(LANGUAGES.keys()).index("English")
     )
     target_lang_code = LANGUAGES[target_lang_name]
     
