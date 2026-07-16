@@ -11,6 +11,158 @@ st.set_page_config(
     layout="centered"
 )
 
+# Inject custom CSS for premium design
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+
+    /* Global Body and Font Settings */
+    .stApp {
+        background-color: #0E111A;
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Gradient Hero Title */
+    .hero-title {
+        background: -webkit-linear-gradient(135deg, #A855F7 0%, #3B82F6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        font-size: 2.6rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        letter-spacing: -0.5px;
+        margin-top: 1rem;
+    }
+
+    .hero-subtitle {
+        color: #9CA3AF;
+        font-size: 1.05rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-weight: 300;
+        line-height: 1.5;
+    }
+
+    /* Sleek Card Headers */
+    .custom-card-header {
+        font-weight: 700;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: #FFFFFF;
+        font-size: 1.35rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        letter-spacing: -0.2px;
+    }
+
+    /* File Uploader Container */
+    div[data-testid="stFileUploader"] {
+        background: rgba(26, 29, 36, 0.6) !important;
+        border: 2px dashed rgba(168, 85, 247, 0.35) !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    div[data-testid="stFileUploader"]:hover {
+        border-color: #3B82F6 !important;
+        background: rgba(26, 29, 36, 0.8) !important;
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.12) !important;
+    }
+
+    /* Buttons restyling */
+    div.stButton > button {
+        background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 28px !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3) !important;
+        width: 100% !important;
+        margin-top: 15px;
+    }
+
+    div.stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.45) !important;
+        background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%) !important;
+    }
+
+    div.stButton > button:active {
+        transform: translateY(1px) !important;
+    }
+
+    /* Download button */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 14px 28px !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+    }
+
+    .stDownloadButton > button:hover {
+        background: linear-gradient(135deg, #34D399 0%, #10B981 100%) !important;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    /* Custom selectboxes/inputs */
+    div[data-baseweb="select"] > div {
+        background-color: #1A1D24 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 10px !important;
+        color: white !important;
+        padding: 2px 4px !important;
+    }
+
+    div[data-baseweb="input"] {
+        background-color: #1A1D24 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 10px !important;
+        padding: 2px 4px !important;
+    }
+    
+    div[data-baseweb="input"] input {
+        color: white !important;
+    }
+    
+    /* Sleek status banners */
+    div.stAlert {
+        background-color: rgba(26, 29, 36, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 14px !important;
+        color: white !important;
+        backdrop-filter: blur(8px);
+    }
+    
+    /* Sleek divider */
+    hr {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        margin: 2.5rem 0 !important;
+    }
+    
+    /* Captions */
+    .stCaption {
+        color: #6B7280 !important;
+        font-weight: 300;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # API Configuration
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
 
@@ -56,27 +208,31 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
         if status == "completed":
             html = f"""
             <html>
-            <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2>Subtitle Generation Complete!</h2>
-                <p>Your video <strong>{original_filename}</strong> has been successfully subtitled.</p>
-                <p>Since the application is running in Standalone Mode, you can find the downloaded file directly on your screen in the browser tab.</p>
-                <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px;" />
-                <p style="font-size: 12px; color: #777;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
+            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 30px; color: #333; background-color: #f9f9f9;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                    <h2 style="color: #4B5563; border-bottom: 2px solid #E5E7EB; padding-bottom: 12px; margin-top: 0;">Subtitle Generation Complete</h2>
+                    <p style="font-size: 15px; line-height: 1.6;">Your video <strong>{original_filename}</strong> has been successfully subtitled.</p>
+                    <p style="font-size: 15px; line-height: 1.6;">Since the application is running in Standalone Mode, you can find the downloaded file directly on your screen in the browser tab.</p>
+                    <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;" />
+                    <p style="font-size: 12px; color: #9CA3AF; text-align: center;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
+                </div>
             </body>
             </html>
             """
         else:
             html = f"""
             <html>
-            <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2>Subtitle Generation Failed</h2>
-                <p>Unfortunately, processing your video <strong>{original_filename}</strong> ran into an error.</p>
-                <p><strong>Error Reason:</strong></p>
-                <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
-                    <code>{error_reason}</code>
-                </blockquote>
-                <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px;" />
-                <p style="font-size: 12px; color: #777;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
+            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 30px; color: #333; background-color: #f9f9f9;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                    <h2 style="color: #EF4444; border-bottom: 2px solid #E5E7EB; padding-bottom: 12px; margin-top: 0;">Subtitle Generation Failed</h2>
+                    <p style="font-size: 15px; line-height: 1.6;">Unfortunately, processing your video <strong>{original_filename}</strong> ran into an error.</p>
+                    <p style="font-size: 15px; line-height: 1.6;"><strong>Error Reason:</strong></p>
+                    <blockquote style="background: #f9f9f9; border-left: 4px solid #EF4444; margin: 1.5em 0; padding: 12px 16px; border-radius: 0 8px 8px 0;">
+                        <code style="font-family: monospace; color: #374151;">{error_reason}</code>
+                    </blockquote>
+                    <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;" />
+                    <p style="font-size: 12px; color: #9CA3AF; text-align: center;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
+                </div>
             </body>
             </html>
             """
@@ -108,19 +264,18 @@ LANGUAGES = {
     "English": "en"
 }
 
-st.title("Multilingual Video Subtitle Generator")
+# Hero Title and Subtitle Header
+st.markdown('<div class="hero-title">Multilingual Video Subtitle Generator</div>', unsafe_allow_html=True)
 st.markdown(
-    """
-    Upload a video with speech, select your target translation language, 
-    and burn subtitles directly into the video file locally and free!
-    """
+    '<div class="hero-subtitle">Upload a video with speech, select your target translation language, and burn customized subtitles directly into your video file instantly.</div>', 
+    unsafe_allow_html=True
 )
 
-# Show running mode
+# Show running mode banner
 if st.session_state.use_api:
     st.success("Connected to backend API server.")
 else:
-    st.info("Running in **Standalone Mode** (processing will run directly inside this app instance).")
+    st.info("Running in Standalone Mode (processing will run directly inside this app instance).")
 
 st.divider()
 
@@ -183,7 +338,7 @@ if uploaded_file:
 
 # If file is uploaded and processed, show preview and options
 if st.session_state.video_id:
-    st.subheader("Configure Subtitle Styling & Position")
+    st.markdown('<div class="custom-card-header">Configure Subtitle Styling & Position</div>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     
@@ -274,7 +429,7 @@ if st.session_state.video_id:
             st.warning(f"Error loading preview frame: {e}")
             
     st.divider()
-    st.subheader("Select Language & Notifications")
+    st.markdown('<div class="custom-card-header">Select Language & Notifications</div>', unsafe_allow_html=True)
     
     target_lang_name = st.selectbox(
         "Select Target Language for Subtitles:",
@@ -360,7 +515,7 @@ if st.session_state.video_id:
                                     video_bytes = video_resp.content
                                     
                                     # Display native video player
-                                    st.subheader("Preview Subtitled Video")
+                                    st.markdown('<div class="custom-card-header">Preview Subtitled Video</div>', unsafe_allow_html=True)
                                     st.video(video_bytes)
                                     
                                     # Provide download button
@@ -421,7 +576,7 @@ if st.session_state.video_id:
                                 video_bytes = f.read()
                                 
                             # Display player
-                            st.subheader("Preview Subtitled Video")
+                            st.markdown('<div class="custom-card-header">Preview Subtitled Video</div>', unsafe_allow_html=True)
                             st.video(video_bytes)
                             
                             # Provide download button
