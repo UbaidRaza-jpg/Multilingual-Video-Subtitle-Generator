@@ -84,7 +84,7 @@ def send_email_notification(to_email: str, task_id: str, status: str, filename: 
         
     try:
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"🎬 Subtitle Task: {filename} - {status.upper()}"
+        msg["Subject"] = f"Subtitle Task: {filename} - {status.upper()}"
         msg["From"] = from_email
         msg["To"] = to_email
         
@@ -95,7 +95,7 @@ def send_email_notification(to_email: str, task_id: str, status: str, filename: 
             html = f"""
             <html>
             <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2 style="color: #4CAF50;">🎬 Subtitle Generation Complete!</h2>
+                <h2 style="color: #4CAF50;">Subtitle Generation Complete!</h2>
                 <p>Your video <strong>{filename}</strong> has been successfully subtitled.</p>
                 <p>You can download it now by clicking the link below:</p>
                 <p style="margin-top: 20px;">
@@ -110,7 +110,7 @@ def send_email_notification(to_email: str, task_id: str, status: str, filename: 
             html = f"""
             <html>
             <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2 style="color: #F44336;">❌ Subtitle Generation Failed</h2>
+                <h2 style="color: #F44336;">Subtitle Generation Failed</h2>
                 <p>Unfortunately, processing your video <strong>{filename}</strong> ran into an error.</p>
                 <p><strong>Error Reason:</strong></p>
                 <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">

@@ -7,7 +7,7 @@ import streamlit as st
 # Configure page settings
 st.set_page_config(
     page_title="Multilingual Video Subtitle Generator",
-    page_icon="🎬",
+    page_icon="video",
     layout="centered"
 )
 
@@ -49,7 +49,7 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
         from email.mime.text import MIMEText
         
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"🎬 Subtitle Task: {original_filename} - {status.upper()}"
+        msg["Subject"] = f"Subtitle Task: {original_filename} - {status.upper()}"
         msg["From"] = from_email
         msg["To"] = to_email
         
@@ -57,7 +57,7 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
             html = f"""
             <html>
             <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2 style="color: #4CAF50;">🎬 Subtitle Generation Complete!</h2>
+                <h2>Subtitle Generation Complete!</h2>
                 <p>Your video <strong>{original_filename}</strong> has been successfully subtitled.</p>
                 <p>Since the application is running in Standalone Mode, you can find the downloaded file directly on your screen in the browser tab.</p>
                 <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px;" />
@@ -69,7 +69,7 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
             html = f"""
             <html>
             <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2 style="color: #F44336;">❌ Subtitle Generation Failed</h2>
+                <h2>Subtitle Generation Failed</h2>
                 <p>Unfortunately, processing your video <strong>{original_filename}</strong> ran into an error.</p>
                 <p><strong>Error Reason:</strong></p>
                 <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
@@ -108,7 +108,7 @@ LANGUAGES = {
     "English": "en"
 }
 
-st.title("🎬 Multilingual Video Subtitle Generator")
+st.title("Multilingual Video Subtitle Generator")
 st.markdown(
     """
     Upload a video with speech, select your target translation language, 
@@ -118,9 +118,9 @@ st.markdown(
 
 # Show running mode
 if st.session_state.use_api:
-    st.success("🟢 Connected to backend API server.")
+    st.success("Connected to backend API server.")
 else:
-    st.info("ℹ️ Running in **Standalone Mode** (processing will run directly inside this app instance).")
+    st.info("Running in **Standalone Mode** (processing will run directly inside this app instance).")
 
 st.divider()
 
@@ -183,7 +183,7 @@ if uploaded_file:
 
 # If file is uploaded and processed, show preview and options
 if st.session_state.video_id:
-    st.subheader("🛠️ Configure Subtitle Styling & Position")
+    st.subheader("Configure Subtitle Styling & Position")
     
     col1, col2, col3 = st.columns(3)
     
@@ -274,7 +274,7 @@ if st.session_state.video_id:
             st.warning(f"Error loading preview frame: {e}")
             
     st.divider()
-    st.subheader("🌐 Select Language & Notifications")
+    st.subheader("Select Language & Notifications")
     
     target_lang_name = st.selectbox(
         "Select Target Language for Subtitles:",
@@ -290,7 +290,7 @@ if st.session_state.video_id:
     )
     
     # Action Button
-    if st.button("🚀 Generate Subtitles", use_container_width=True):
+    if st.button("Generate Subtitles", use_container_width=True):
         st.info("Triggering subtitle generation...")
         
         if st.session_state.use_api:
@@ -333,10 +333,10 @@ if st.session_state.video_id:
                                     
                                     # Update progress bar and text status
                                     if status in ["queued", "uploaded"]:
-                                        status_box.info(f"⏳ Status: Queued (Waiting for worker...) | Time elapsed: {elapsed:.1f}s")
+                                        status_box.info(f"Status: Queued (Waiting for worker...) | Time elapsed: {elapsed:.1f}s")
                                         progress_bar.progress(10)
                                     elif status == "processing":
-                                        status_box.info(f"⚙️ Status: Processing (Transcribing & Translating...) | Time elapsed: {elapsed:.1f}s")
+                                        status_box.info(f"Status: Processing (Transcribing & Translating...) | Time elapsed: {elapsed:.1f}s")
                                         progress_bar.progress(50)
                                 else:
                                     status_box.warning(f"Warning: Failed to poll status (HTTP {status_resp.status_code}). Retrying...")
@@ -349,7 +349,7 @@ if st.session_state.video_id:
                     # Final Task resolution
                     if status == "completed":
                         progress_bar.progress(100)
-                        status_box.success("🎉 Subtitle generation completed successfully!")
+                        status_box.success("Subtitle generation completed successfully!")
                         
                         # Download final video bytes to serve locally in streamlit
                         download_url = f"{API_URL}/download/{task_id}"
@@ -360,13 +360,13 @@ if st.session_state.video_id:
                                     video_bytes = video_resp.content
                                     
                                     # Display native video player
-                                    st.subheader("🎥 Preview Subtitled Video")
+                                    st.subheader("Preview Subtitled Video")
                                     st.video(video_bytes)
                                     
                                     # Provide download button
                                     output_filename = f"{os.path.splitext(uploaded_file.name)[0]}_subtitled_{target_lang_code}.mp4"
                                     st.download_button(
-                                        label="💾 Download Subtitled Video",
+                                        label="Download Subtitled Video",
                                         data=video_bytes,
                                         file_name=output_filename,
                                         mime="video/mp4",
@@ -384,7 +384,7 @@ if st.session_state.video_id:
                             error_reason = status_resp.json().get("error", "Unknown error")
                         except Exception:
                             error_reason = "Unknown error"
-                        st.error(f"❌ Subtitle generation failed: {error_reason}")
+                        st.error(f"Subtitle generation failed: {error_reason}")
                         
             except requests.exceptions.ConnectionError:
                 st.error("Could not connect to backend server. Please verify FastAPI is running on http://localhost:8000.")
@@ -400,7 +400,7 @@ if st.session_state.video_id:
                 
                 with st.spinner("Processing video locally... (this might take a few minutes depending on CPU)"):
                     try:
-                        status_box.info("⚙️ Step 1/3: Transcribing & Translating speech...")
+                        status_box.info("Step 1/3: Transcribing & Translating speech...")
                         progress_bar.progress(30)
                         
                         # Process video locally and synchronously
@@ -414,20 +414,20 @@ if st.session_state.video_id:
                         
                         if output_filepath and os.path.exists(output_filepath):
                             progress_bar.progress(100)
-                            status_box.success("🎉 Subtitle generation completed successfully!")
+                            status_box.success("Subtitle generation completed successfully!")
                             
                             # Read final video bytes
                             with open(output_filepath, "rb") as f:
                                 video_bytes = f.read()
                                 
                             # Display player
-                            st.subheader("🎥 Preview Subtitled Video")
+                            st.subheader("Preview Subtitled Video")
                             st.video(video_bytes)
                             
                             # Provide download button
                             output_filename = f"{os.path.splitext(uploaded_file.name)[0]}_subtitled_{target_lang_code}.mp4"
                             st.download_button(
-                                label="💾 Download Subtitled Video",
+                                label="Download Subtitled Video",
                                 data=video_bytes,
                                 file_name=output_filename,
                                 mime="video/mp4",
@@ -436,13 +436,13 @@ if st.session_state.video_id:
                             
                             # Send Email Notification
                             if email_input.strip() != "":
-                                status_box.info("✉️ Sending email notification...")
+                                status_box.info("Sending email notification...")
                                 send_standalone_email(
                                     email_input.strip(),
                                     "completed",
                                     uploaded_file.name
                                 )
-                                status_box.success("🎉 Completed and notification email sent!")
+                                status_box.success("Completed and notification email sent!")
                                 
                             # Clean up generated video to save space
                             try:
@@ -453,7 +453,7 @@ if st.session_state.video_id:
                             raise Exception("Local subtitle burning engine returned empty output path.")
                     except Exception as err:
                         progress_bar.progress(0)
-                        status_box.error(f"❌ Subtitle generation failed: {err}")
+                        status_box.error(f"Subtitle generation failed: {err}")
                         
                         # Send Failure Email
                         if email_input.strip() != "":
