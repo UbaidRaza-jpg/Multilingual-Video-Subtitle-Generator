@@ -427,15 +427,29 @@ if st.session_state.video_id:
             st.warning(f"Error loading preview frame: {e}")
             
     st.divider()
-    st.markdown('<div class="custom-card-header">Select Language & Notifications</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-card-header">Select Language & Accuracy</div>', unsafe_allow_html=True)
     
-    target_lang_name = st.selectbox(
-        "Select Target Language for Subtitles:",
-        options=list(LANGUAGES.keys()),
-        index=list(LANGUAGES.keys()).index("English")
-    )
-    target_lang_code = LANGUAGES[target_lang_name]
-    
+    col_lang, col_acc = st.columns(2)
+    with col_lang:
+        target_lang_name = st.selectbox(
+            "Select Target Language for Subtitles:",
+            options=list(LANGUAGES.keys()),
+            index=list(LANGUAGES.keys()).index("English")
+        )
+        target_lang_code = LANGUAGES[target_lang_name]
+        
+    with col_acc:
+        ACCURACY_MODELS = {
+            "High Accuracy (Recommended)": "small",
+            "Fast / Standard Accuracy": "base"
+        }
+        accuracy_name = st.selectbox(
+            "Select Transcription Accuracy:",
+            options=list(ACCURACY_MODELS.keys()),
+            index=0
+        )
+        model_size_code = ACCURACY_MODELS[accuracy_name]
+        
     email_input = st.text_input(
         "Email Address for Notifications (Optional):",
         placeholder="Enter your email to receive a notification download link when complete.",
@@ -456,7 +470,8 @@ if st.session_state.video_id:
                     "alignment": align_code,
                     "font_size": size_code,
                     "font_color": color_code,
-                    "email": email_input.strip() if email_input.strip() != "" else None
+                    "email": email_input.strip() if email_input.strip() != "" else None,
+                    "model_size": model_size_code
                 }
                 response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
                 
@@ -562,7 +577,8 @@ if st.session_state.video_id:
                             target_lang_code,
                             align_code,
                             size_code,
-                            color_code
+                            color_code,
+                            model_size=model_size_code
                         )
                         
                         if output_filepath and os.path.exists(output_filepath):

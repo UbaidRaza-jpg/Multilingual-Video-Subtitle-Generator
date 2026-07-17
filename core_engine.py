@@ -46,7 +46,7 @@ def get_ffmpeg_subtitles_filter_path(srt_path: str) -> str:
     return f"subtitles='{escaped_path}'"
 
 
-def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "base") -> bool:
+def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "small") -> bool:
     """
     Transcribe audio from video_path and save to output_srt_path using faster-whisper.
     """
@@ -352,7 +352,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     return True
 
 
-def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF") -> str:
+def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small") -> str:
     """
     Process the input video by transcribing it, translating the transcript,
     and hardcoding the translated subtitles.
@@ -384,7 +384,7 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
     
     try:
         # Step 1: Transcribe
-        transcribe_success = transcribe_video(input_path, raw_srt_path)
+        transcribe_success = transcribe_video(input_path, raw_srt_path, model_size=model_size)
         if not transcribe_success:
             raise Exception("Transcription failed.")
             

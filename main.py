@@ -136,7 +136,7 @@ def send_email_notification(to_email: str, task_id: str, status: str, filename: 
         print(f"Error sending notification email to {to_email}: {e}")
 
 
-def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int, font_size: int, font_color: str, email: str = None):
+def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int, font_size: int, font_color: str, email: str = None, model_size: str = "small"):
     """
     Background worker that invokes the core video processing engine
     and updates the status database upon completion or failure.
@@ -146,7 +146,7 @@ def async_process_video_task(task_id: str, input_path: str, target_language: str
         tasks_db[task_id]["status"] = "processing"
         
         # Run core processing with specified alignment position, font size, and color
-        output_path = process_video(input_path, target_language, alignment, font_size, font_color)
+        output_path = process_video(input_path, target_language, alignment, font_size, font_color, model_size=model_size)
         
         if output_path and os.path.exists(output_path):
             tasks_db[task_id]["status"] = "completed"
@@ -286,7 +286,8 @@ async def process_video_endpoint(
     alignment: int = Form(2),
     font_size: int = Form(20),
     font_color: str = Form("&H00FFFFFF"),
-    email: str = Form(None)
+    email: str = Form(None),
+    model_size: str = Form("small")
 ):
     """
     Step 3: Trigger the full background transcription and subtitle burning process.
@@ -314,7 +315,8 @@ async def process_video_endpoint(
         alignment,
         font_size,
         font_color,
-        email
+        email,
+        model_size
     )
 
     return {
