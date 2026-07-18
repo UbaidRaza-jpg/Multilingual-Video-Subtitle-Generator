@@ -554,6 +554,7 @@ def show_configure_dialog():
                     "font_color": st.session_state.params["color_code"],
                     "model_size": st.session_state.params["model_size_code"],
                     "resolution_cap": st.session_state.params["resolution_cap_code"],
+                    "segmentation_mode": st.session_state.params["segmentation_mode_code"],
                     "email": st.session_state.params.get("email")
                 }
                 
@@ -635,7 +636,8 @@ def show_configure_dialog():
                         st.session_state.params["size_code"],
                         st.session_state.params["color_code"],
                         model_size=st.session_state.params["model_size_code"],
-                        resolution_cap=st.session_state.params["resolution_cap_code"]
+                        resolution_cap=st.session_state.params["resolution_cap_code"],
+                        segmentation_mode=st.session_state.params["segmentation_mode_code"]
                     )
                     
                     if output_filepath and os.path.exists(output_filepath):
@@ -722,7 +724,7 @@ def show_configure_dialog():
             else:
                 color_code = COLORS[color_name]
             
-        col_lang, col_acc, col_res = st.columns(3)
+        col_lang, col_acc, col_res, col_seg = st.columns(4)
         with col_lang:
             target_lang_name = st.selectbox(
                 "Target Language:",
@@ -747,6 +749,14 @@ def show_configure_dialog():
             }
             res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=0)
             resolution_cap_code = RESOLUTIONS[res_name]
+            
+        with col_seg:
+            SEGMENTATIONS = {
+                "Line by Line": "line_by_line",
+                "Word by Word": "word_by_word"
+            }
+            seg_name = st.selectbox("Subtitle Style:", options=list(SEGMENTATIONS.keys()), index=0)
+            segmentation_mode = SEGMENTATIONS[seg_name]
             
         st.divider()
         
@@ -804,6 +814,7 @@ def show_configure_dialog():
                 "color_code": color_code,
                 "model_size_code": model_size_code,
                 "resolution_cap_code": resolution_cap_code,
+                "segmentation_mode_code": segmentation_mode,
                 "email": email_input.strip() if email_input.strip() != "" else None
             }
             st.session_state.is_processing = True

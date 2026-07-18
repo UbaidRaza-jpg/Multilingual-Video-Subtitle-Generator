@@ -136,7 +136,7 @@ def send_email_notification(to_email: str, task_id: str, status: str, filename: 
         print(f"Error sending notification email to {to_email}: {e}")
 
 
-def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int, font_size: int, font_color: str, email: str = None, model_size: str = "small", resolution_cap: str = "original"):
+def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int, font_size: int, font_color: str, email: str = None, model_size: str = "small", resolution_cap: str = "original", segmentation_mode: str = "line_by_line"):
     """
     Background worker that invokes the core video processing engine
     and updates the status database upon completion or failure.
@@ -145,8 +145,8 @@ def async_process_video_task(task_id: str, input_path: str, target_language: str
     try:
         tasks_db[task_id]["status"] = "processing"
         
-        # Run core processing with specified alignment position, font size, color, and resolution cap
-        output_path = process_video(input_path, target_language, alignment, font_size, font_color, model_size=model_size, resolution_cap=resolution_cap)
+        # Run core processing with specified alignment position, font size, color, resolution cap, and segmentation mode
+        output_path = process_video(input_path, target_language, alignment, font_size, font_color, model_size=model_size, resolution_cap=resolution_cap, segmentation_mode=segmentation_mode)
         
         if output_path and os.path.exists(output_path):
             tasks_db[task_id]["status"] = "completed"
@@ -288,7 +288,8 @@ async def process_video_endpoint(
     font_color: str = Form("&H00FFFFFF"),
     email: str = Form(None),
     model_size: str = Form("small"),
-    resolution_cap: str = Form("original")
+    resolution_cap: str = Form("original"),
+    segmentation_mode: str = Form("line_by_line")
 ):
     """
     Step 3: Trigger the full background transcription and subtitle burning process.
@@ -318,7 +319,8 @@ async def process_video_endpoint(
         font_color,
         email,
         model_size,
-        resolution_cap
+        resolution_cap,
+        segmentation_mode
     )
 
     return {

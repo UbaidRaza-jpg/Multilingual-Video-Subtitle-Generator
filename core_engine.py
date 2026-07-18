@@ -46,7 +46,7 @@ def get_ffmpeg_subtitles_filter_path(srt_path: str) -> str:
     return f"subtitles='{escaped_path}'"
 
 
-def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "small") -> bool:
+def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "small", segmentation_mode: str = "line_by_line") -> bool:
     """
     Transcribe audio from video_path and save to output_srt_path using faster-whisper.
     """
@@ -56,8 +56,8 @@ def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "s
     # cpu is the default device, int8 compute type is optimized for CPU inference
     model = WhisperModel(model_size, device="cpu", compute_type="int8")
     
-    print(f"Transcribing {video_path}...")
-    segments, info = model.transcribe(video_path, beam_size=5)
+    print(f"Transcribing {video_path} (segmentation: {segmentation_mode})...")
+    segments, info = model.transcribe(video_path, beam_size=5, word_timestamps=True)
     
     # We must consume the generator to transcribe
     segments = list(segments)
@@ -66,13 +66,39 @@ def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "s
     print(f"Writing raw transcript to {output_srt_path}...")
     
     with open(output_srt_path, "w", encoding="utf-8") as f:
-        for idx, segment in enumerate(segments, start=1):
-            start = format_time(segment.start)
-            end = format_time(segment.end)
-            text = segment.text.strip()
-            f.write(f"{idx}\n")
-            f.write(f"{start} --> {end}\n")
-            f.write(f"{text}\n\n")
+        idx = 1
+        for segment in segments:
+            if segmentation_mode == "word_by_word":
+                if segment.words:
+                    for w in segment.words:
+                        start = format_time(w.start)
+                        end = format_time(w.end)
+                        text = w.word.strip()
+                        if text:
+                            f.write(f"{idx}\n")
+                            f.write(f"{start} --> {end}\n")
+                            f.write(f"{text}\n\n")
+                            idx += 1
+                else:
+                    # Fallback
+                    start = format_time(segment.start)
+                    end = format_time(segment.end)
+                    text = segment.text.strip().replace("\n", " ").replace("\r", "")
+                    if text:
+                        f.write(f"{idx}\n")
+                        f.write(f"{start} --> {end}\n")
+                        f.write(f"{text}\n\n")
+                        idx += 1
+            else:
+                # line_by_line
+                start = format_time(segment.start)
+                end = format_time(segment.end)
+                text = segment.text.strip().replace("\n", " ").replace("\r", "")
+                if text:
+                    f.write(f"{idx}\n")
+                    f.write(f"{start} --> {end}\n")
+                    f.write(f"{text}\n\n")
+                    idx += 1
             
     return True
 
@@ -363,7 +389,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     return True
 
 
-def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small", resolution_cap: str = "original") -> str:
+def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small", resolution_cap: str = "original", segmentation_mode: str = "line_by_line") -> str:
     """
     Process the input video by transcribing it, translating the transcript,
     and hardcoding the translated subtitles.
@@ -397,7 +423,7 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
     
     try:
         # Step 1: Transcribe
-        transcribe_success = transcribe_video(input_path, raw_srt_path, model_size=model_size)
+        transcribe_success = transcribe_video(input_path, raw_srt_path, model_size=model_size, segmentation_mode=segmentation_mode)
         if not transcribe_success:
             raise Exception("Transcription failed.")
             
