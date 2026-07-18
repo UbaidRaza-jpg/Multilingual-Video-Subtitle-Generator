@@ -359,6 +359,9 @@ LANGUAGES = {
     "Maori (Māori)": "mi"
 }
 
+# Sort alphabetically for user-friendly selectbox search
+LANGUAGES = dict(sorted(LANGUAGES.items()))
+
 # Hero Title and Subtitle Header
 st.markdown('<div class="hero-title">Multilingual Video Subtitle Generator</div>', unsafe_allow_html=True)
 st.markdown(
