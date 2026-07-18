@@ -319,13 +319,29 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
         if status == "completed":
             html = f"""
             <html>
-            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 30px; color: #333; background-color: #f9f9f9;">
-                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;">
-                    <h2 style="color: #4B5563; border-bottom: 2px solid #E5E7EB; padding-bottom: 12px; margin-top: 0;">Subtitle Generation Complete</h2>
-                    <p style="font-size: 15px; line-height: 1.6;">Your video <strong>{original_filename}</strong> has been successfully subtitled.</p>
-                    <p style="font-size: 15px; line-height: 1.6;">Since the application is running in Standalone Mode, you can find the downloaded file directly on your screen in the browser tab.</p>
-                    <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;" />
-                    <p style="font-size: 12px; color: #9CA3AF; text-align: center;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #374151; background-color: #F3F4F6; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #E5E7EB;">
+                    <h2 style="color: #1F2937; border-bottom: 2px solid #F3F4F6; padding-bottom: 15px; margin-top: 0; font-size: 1.4rem; font-weight: 700;">
+                        Subtitle Generation Complete!
+                    </h2>
+                    <p style="font-size: 15px; line-height: 1.6; margin-top: 20px; color: #4B5563;">
+                        Your video <strong>{original_filename}</strong> has been successfully subtitled.
+                    </p>
+                    <div style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 18px 20px; border-radius: 0 12px 12px 0; margin: 25px 0;">
+                        <p style="font-size: 14.5px; line-height: 1.6; color: #1E3A8A; margin: 0;">
+                            For maximum security and high-speed delivery, your subtitled video is compiled and served directly within your active browser tab.
+                        </p>
+                        <p style="font-size: 14.5px; line-height: 1.6; color: #1E3A8A; margin-top: 10px; margin-bottom: 0; font-weight: 600;">
+                            Please return to the website tab in your browser to download your video immediately at full speed.
+                        </p>
+                    </div>
+                    <p style="font-size: 15px; line-height: 1.6; color: #4B5563;">
+                        Thank you for using our service!
+                    </p>
+                    <hr style="border: 0; border-top: 1px solid #F3F4F6; margin-top: 35px;" />
+                    <p style="font-size: 12px; color: #9CA3AF; text-align: center; margin-bottom: 0;">
+                        This is an automated notification from the Multilingual Video Subtitle Generator.
+                    </p>
                 </div>
             </body>
             </html>
