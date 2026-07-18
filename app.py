@@ -173,6 +173,68 @@ st.markdown(
         text-align: center;
         margin-top: 2rem;
     }
+
+    /* Orbit Loader Spinner */
+    .loader-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 45px 25px;
+        background: rgba(26, 29, 36, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        margin: 30px auto !important;
+        max-width: 450px !important;
+        backdrop-filter: blur(12px) !important;
+    }
+    
+    .orbit-spinner {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 25px;
+    }
+    
+    .orbit-ball {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%) !important;
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.7) !important;
+        animation: orbit-animation 1.6s infinite linear !important;
+    }
+    
+    .ball-1 { animation-delay: 0s; transform: rotate(0deg) translate(30px) rotate(0deg); }
+    .ball-2 { animation-delay: 0.53s; transform: rotate(120deg) translate(30px) rotate(-120deg); }
+    .ball-3 { animation-delay: 1.06s; transform: rotate(240deg) translate(30px) rotate(-240deg); }
+
+    @keyframes orbit-animation {
+        0% {
+            transform: rotate(0deg) translate(30px) rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg) translate(30px) rotate(-360deg);
+        }
+    }
+    
+    .loader-title {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        color: #FFFFFF !important;
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 6px !important;
+        letter-spacing: -0.2px !important;
+    }
+    
+    .loader-subtitle {
+        font-family: 'Outfit', sans-serif !important;
+        color: #9CA3AF !important;
+        font-size: 0.9rem !important;
+        font-weight: 300 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -196,6 +258,40 @@ try:
     LOCAL_ENGINE_AVAILABLE = True
 except ImportError:
     LOCAL_ENGINE_AVAILABLE = False
+
+
+def hex_to_ass_color(hex_str: str) -> str:
+    """
+    Converts standard HTML color hex (#RRGGBB) to Subtitle ASS primary color format (&H00BBGGRR).
+    """
+    hex_str = hex_str.lstrip('#').replace('&H00', '').replace('&H', '')
+    if len(hex_str) == 6:
+        r = hex_str[0:2]
+        g = hex_str[2:4]
+        b = hex_str[4:6]
+        return f"&H00{b}{g}{r}".upper()
+    return "&H00FFFFFF"
+
+
+def render_orbit_loader(title: str, subtitle: str):
+    """
+    Renders a custom CSS animated orbit spinner with title and subtitle labels.
+    """
+    st.markdown(
+        f"""
+        <div class="loader-container">
+            <div class="orbit-spinner">
+                <div class="orbit-ball ball-1"></div>
+                <div class="orbit-ball ball-2"></div>
+                <div class="orbit-ball ball-3"></div>
+            </div>
+            <div class="loader-title">{title}</div>
+            <div class="loader-subtitle">{subtitle}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 # Standalone SMTP notifier helper
 def send_standalone_email(to_email: str, status: str, original_filename: str, error_reason: str = None):
@@ -456,10 +552,15 @@ def show_configure_dialog():
             "Cyan": "&H00FFFF00",
             "Red": "&H000000FF",
             "Green": "&H0000FF00",
-            "Blue": "&H00FF0000"
+            "Blue": "&H00FF0000",
+            "Custom Color Picker...": "custom"
         }
         color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
-        color_code = COLORS[color_name]
+        if COLORS[color_name] == "custom":
+            chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
+            color_code = hex_to_ass_color(chosen_hex)
+        else:
+            color_code = COLORS[color_name]
         
     col_lang, col_acc, col_res = st.columns(3)
     with col_lang:
@@ -672,13 +773,14 @@ elif st.session_state.step == "configure":
 
 # STEP 3: Video Processing Screen
 elif st.session_state.step == "processing":
-    st.markdown('<div class="custom-card-header">Generating Subtitles...</div>', unsafe_allow_html=True)
-    status_box = st.empty()
-    progress_bar = st.progress(0)
+    status_holder = st.empty()
     
     if st.session_state.use_api:
         # API Mode processing
         try:
+            with status_holder:
+                render_orbit_loader("Submitting Task", "Uploading configuration details to server queue...")
+                
             payload = {
                 "target_language": st.session_state.params["target_lang_code"],
                 "alignment": st.session_state.params["align_code"],
@@ -710,38 +812,38 @@ elif st.session_state.step == "processing":
                             elapsed = time.time() - start_time
                             
                             if status in ["queued", "uploaded"]:
-                                status_box.info(f"Status: Queued (Waiting for worker...) | Time elapsed: {elapsed:.1f}s")
-                                progress_bar.progress(15)
+                                with status_holder:
+                                    render_orbit_loader("Queued in Queue", f"Waiting for background worker... (elapsed: {elapsed:.1f}s)")
                             elif status == "processing":
-                                status_box.info(f"Status: Processing (Transcribing & Translating...) | Time elapsed: {elapsed:.1f}s")
-                                progress_bar.progress(60)
+                                with status_holder:
+                                    render_orbit_loader("AI Processing", f"Transcribing audio & translating subtitles... (elapsed: {elapsed:.1f}s)")
                         else:
-                            status_box.warning("Warning: Failed to retrieve task status. Retrying...")
+                            with status_holder:
+                                render_orbit_loader("Server Status Check", "Retrying server status link...")
                     except Exception as poll_err:
-                        status_box.warning(f"Connection warning: {poll_err}. Retrying status poll...")
+                        with status_holder:
+                            render_orbit_loader("Connection Interrupted", "Re-connecting to backend server...")
                     time.sleep(3)
                 
                 if status == "completed":
-                    progress_bar.progress(100)
-                    status_box.success("Subtitle generation completed successfully!")
+                    with status_holder:
+                        render_orbit_loader("Completed!", "Retrieving finalized video file from server...")
                     
                     # Download video bytes
                     download_url = f"{API_URL}/download/{task_id}"
-                    with st.spinner("Downloading subtitled video..."):
-                        try:
-                            video_resp = requests.get(download_url)
-                            if video_resp.status_code == 200:
-                                st.session_state.final_video_bytes = video_resp.content
-                                st.session_state.step = "download"
-                                st.rerun()
-                            else:
-                                raise Exception(f"Download failed (HTTP {video_resp.status_code})")
-                        except Exception as dl_err:
-                            st.error(f"Failed to retrieve subtitled file: {dl_err}")
-                            if st.button("Start Over"):
-                                start_over()
+                    try:
+                        video_resp = requests.get(download_url)
+                        if video_resp.status_code == 200:
+                            st.session_state.final_video_bytes = video_resp.content
+                            st.session_state.step = "download"
+                            st.rerun()
+                        else:
+                            raise Exception(f"Download failed (HTTP {video_resp.status_code})")
+                    except Exception as dl_err:
+                        st.error(f"Failed to retrieve subtitled file: {dl_err}")
+                        if st.button("Start Over"):
+                            start_over()
                 elif status == "failed":
-                    progress_bar.progress(0)
                     try:
                         status_resp = requests.get(f"{API_URL}/status/{task_id}")
                         error_reason = status_resp.json().get("error", "Unknown error")
@@ -759,8 +861,8 @@ elif st.session_state.step == "processing":
         # Standalone Mode processing
         if LOCAL_ENGINE_AVAILABLE:
             try:
-                status_box.info("Step 1/3: Transcribing & Translating speech...")
-                progress_bar.progress(30)
+                with status_holder:
+                    render_orbit_loader("AI Processing (Local)", "Running locally (Step 1/3: Transcribing audio & speech)...")
                 
                 output_filepath = process_video(
                     st.session_state.uploaded_filepath,
@@ -773,8 +875,8 @@ elif st.session_state.step == "processing":
                 )
                 
                 if output_filepath and os.path.exists(output_filepath):
-                    progress_bar.progress(100)
-                    status_box.success("Subtitle generation completed successfully!")
+                    with status_holder:
+                        render_orbit_loader("Completed!", "Finalizing file in memory...")
                     
                     with open(output_filepath, "rb") as f:
                         st.session_state.final_video_bytes = f.read()
@@ -790,7 +892,6 @@ elif st.session_state.step == "processing":
                 else:
                     raise Exception("Local process engine returned an empty output path.")
             except Exception as err:
-                progress_bar.progress(0)
                 st.error(f"Subtitle generation failed: {err}")
                 if st.button("Start Over"):
                     start_over()
