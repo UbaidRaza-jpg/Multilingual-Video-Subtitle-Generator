@@ -753,7 +753,7 @@ def show_configure_dialog():
         # Email notifier text input (Optional) - placed under options as requested
         email_input = st.text_input(
             "Email Address for Notifications (Optional):",
-            placeholder="Enter your email to receive a notification download link when complete.",
+            placeholder="Enter your email to receive a notification of download when complete.",
             help="Ensure you configure the SMTP details in your .env file or Streamlit Cloud secrets to enable emails."
         )
         
