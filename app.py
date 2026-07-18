@@ -882,15 +882,17 @@ def show_configure_dialog():
             col_align, col_style, col_lang = st.columns(3)
             with col_align:
                 ALIGNMENTS = {
-                    "Bottom (Center)": 2,
-                    "Top (Center)": 8,
-                    "Middle (Center)": 5,
-                    "Bottom Left": 1,
-                    "Bottom Right": 3,
                     "Top Left": 7,
-                    "Top Right": 9
+                    "Top Center": 8,
+                    "Top Right": 9,
+                    "Middle Left": 4,
+                    "Middle Center": 5,
+                    "Middle Right": 6,
+                    "Bottom Left": 1,
+                    "Bottom Center": 2,
+                    "Bottom Right": 3
                 }
-                align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=0)
+                align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=7)
                 align_code = ALIGNMENTS[align_name]
                 
             with col_style:
@@ -1094,13 +1096,15 @@ def show_configure_dialog():
                 col_align, col_style, col_res = st.columns(3)
                 with col_align:
                     ALIGNMENTS = {
-                        "Bottom (Center)": 2,
-                        "Top (Center)": 8,
-                        "Middle (Center)": 5,
-                        "Bottom Left": 1,
-                        "Bottom Right": 3,
                         "Top Left": 7,
-                        "Top Right": 9
+                        "Top Center": 8,
+                        "Top Right": 9,
+                        "Middle Left": 4,
+                        "Middle Center": 5,
+                        "Middle Right": 6,
+                        "Bottom Left": 1,
+                        "Bottom Center": 2,
+                        "Bottom Right": 3
                     }
                     reverse_align = {v: k for k, v in ALIGNMENTS.items()}
                     align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=list(ALIGNMENTS.keys()).index(reverse_align[st.session_state.params["align_code"]]))
