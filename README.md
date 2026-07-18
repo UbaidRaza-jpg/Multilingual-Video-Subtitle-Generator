@@ -1,82 +1,109 @@
 # Multilingual Video Subtitle Generator
 
-A free-tier web application that transcribes, translates, and hardcodes subtitles into user-uploaded videos.
+A premium, feature-rich web application that transcribes, translates, and hardcodes subtitles into user-uploaded videos. The application offers a state-of-the-art interactive timeline editor, advanced styling customizer, and a hybrid architecture supporting both a performant FastAPI/Streamlit API mode and a lightweight, database-free Streamlit Standalone deployment mode.
 
-## Features
+---
 
-- **Automated Transcription**: Powered by `faster-whisper` for fast and high-accuracy speech-to-text.
-- **Multilingual Translation**: Seamlessly translate generated subtitles into various target languages using `googletrans`.
-- **Subtitle Hardcoding**: Burn translated subtitles directly into the video output using `moviepy` and `ffmpeg`.
-- **Double Interface**: 
-  - A modern frontend built with **Streamlit** for interactive user uploads and options.
-  - A performant backend API powered by **FastAPI** to handle video processing workflows.
+## Key Features
+
+* **Interactive Subtitle Timeline Editor**: Review and edit transcription/translation segment text directly inside a multi-step modal dialog before burning the subtitles into the final video.
+* **Premium Typography & Bounding Box Styling**: 
+  * Choose from 12 popular fonts (Arial, Arial Black, Calibri, Comic Sans MS, Consolas, Courier New, Georgia, Impact, Tahoma, Times New Roman, Trebuchet MS, Verdana).
+  * **Dynamic Dropdown Previews**: Dropdown menu items and closed values are styled in their exact corresponding font families dynamically.
+  * **Netflix-Style Bounding Box**: Toggle between a standard text outline or a semi-transparent black padded bounding box container behind subtitles for maximum readability.
+* **Word-by-Word & Line-by-Line subtitle timings**:
+  * **Word-by-Word**: Subtitle words pop up and transition as they are spoken, powered by Whisper word-level timestamps.
+  * **Line-by-Line**: Subtitles remain as complete single-sentence lines.
+* **Bilingual (Dual-Language) Subtitles**: Toggle dual-stacked subtitles to display the original spoken language and the translated language at the same time.
+* **Separate SRT Downloader**: Export and download the translated `.srt` subtitle file independently from the hardcoded video file.
+* **Modern glassmorphic UI**: Streamlit interface enhanced with custom CSS stylesheets, responsive alignment selectors (Top/Middle/Bottom rows), and CSS-animated orbit sphere loading screens that prevent browser freeze-ups.
+* **Email Notification System**: Optional email notifications that advise users when their video is ready, prompting them back to their browser tab for secure, high-speed delivery.
+
+---
 
 ## Technology Stack
 
-- **Core Logic**: Python 3.8+
-- **Transcription Engine**: `faster-whisper` (Fast Transformer-based Whisper transcription)
-- **Translation Engine**: `googletrans` (v4.0.0-rc1)
-- **Video & Audio Processing**: `moviepy`, `ffmpeg-python`, and system-level `ffmpeg`
-- **Web App UI**: `streamlit`
-- **API Framework**: `fastapi` & `uvicorn`
+* **Transcription Engine**: `faster-whisper` (Fast Transformer-based Whisper transcription)
+* **Translation Engine**: `googletrans` (v4.0.0-rc1)
+* **Video & Audio Processing**: `ffmpeg` (wrapped with custom filter pipelines for scale and subtitle burns)
+* **Web App UI**: `streamlit` (enhanced with custom HTML/CSS portal overrides)
+* **API Framework**: `fastapi` & `uvicorn`
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.8 or higher.
-- `ffmpeg` installed on your system and added to your system PATH.
+* Python 3.8 or higher.
+* `ffmpeg` installed on your system and added to your system PATH.
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
-   git clone https://github.com/<your-username>/Multilingual-Video-Subtitle-Generator.git
+   git clone https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator.git
    cd Multilingual-Video-Subtitle-Generator
    ```
 
-2. Create a virtual environment and activate it:
+2. **Create and activate a virtual environment**:
    ```bash
    python -m venv venv
-   # On Windows (Command Prompt):
-   venv\Scripts\activate
    # On Windows (PowerShell):
    .\venv\Scripts\Activate.ps1
    # On macOS/Linux:
    source venv/bin/activate
    ```
 
-3. Install the dependencies:
+3. **Install the dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-### Project Structure
+4. **Configure Environment Variables**:
+   Create a `.env` file in the project root to configure SMTP email notification credentials (optional):
+   ```env
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USERNAME=your-email@gmail.com
+   SMTP_PASSWORD=your-google-app-password
+   SMTP_FROM_EMAIL=your-email@gmail.com
+   ```
 
-- `core_engine.py`: Contains the core subtitle generation pipeline (transcription, translation, and burning subtitles via FFmpeg).
-- `main.py`: FastAPI asynchronous backend server exposing endpoints for upload, status polling, and downloads.
-- `app.py`: Interactive Streamlit frontend UI for easy video uploads and subtitle configuration.
-- `test_run.py`: Script to quickly test the subtitle engine locally via command-line.
-- `requirements.txt`: Project library dependencies.
-- `.env`: Environment variables configuration file.
+---
+
+## Project Structure
+
+* [app.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/app.py): The main Streamlit web application. Contains the multi-step styling wizard, interactive timeline text editor, and download layout.
+* [core_engine.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/core_engine.py): The core subtitle generation engine handling transcription, translation, and FFmpeg burning operations.
+* [main.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/main.py): The FastAPI backend exposing REST endpoints for API Mode integration.
+* [requirements.txt](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/requirements.txt): Python package requirements.
+* [packages.txt](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/packages.txt): APT packages required for Cloud hosting (e.g. `ffmpeg`).
+
+---
 
 ## How to Run
 
-### Step 1: Run the Backend API
-Start the FastAPI server on port 8000:
-```bash
-uvicorn main:app --reload
-```
-
-### Step 2: Run the Streamlit Frontend
-Start the Streamlit web interface (in a separate terminal window):
+### Option A: Standalone Mode (Recommended for Streamlit Cloud)
+Running the Streamlit app alone will trigger local standalone processing. This mode is lightweight, database-free, and handles uploads locally:
 ```bash
 streamlit run app.py
 ```
 
-Open your browser and navigate to `http://localhost:8501` to start generating subtitles!
+### Option B: API Mode (FastAPI + Streamlit)
+If you want to run the separate backend processor:
+1. **Start the FastAPI backend server**:
+   ```bash
+   uvicorn main:app --reload
+   ```
+2. **Start the Streamlit web interface** in a separate terminal:
+   ```bash
+   streamlit run app.py
+   ```
+   *The Streamlit frontend will automatically detect the backend on `http://localhost:8000` and route requests through it.*
+
+---
 
 ## License
 
 This project is licensed under the MIT License.
-
