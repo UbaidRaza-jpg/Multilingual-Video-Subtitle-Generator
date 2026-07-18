@@ -235,6 +235,53 @@ st.markdown(
         font-size: 0.9rem !important;
         font-weight: 300 !important;
     }
+
+    /* Style closed font selectbox to display its selected value in the selected font family style */
+    .font-select-container div[data-baseweb="select"] span {
+        font-family: inherit !important;
+        font-weight: 600 !important;
+    }
+    .font-select-container div[data-baseweb="select"] input {
+        font-family: inherit !important;
+    }
+
+    /* Style individual option items inside the detached React portal select dropdown */
+    /* Target lists containing exactly 12 items (which uniquely isolates the Font select box) */
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(1),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(1) { font-family: 'Arial', sans-serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(2),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(2) { font-family: 'Arial Black', sans-serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(3),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(3) { font-family: 'Calibri', sans-serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(4),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(4) { font-family: 'Comic Sans MS', cursive !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(5),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(5) { font-family: 'Consolas', monospace !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(6),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(6) { font-family: 'Courier New', monospace !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(7),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(7) { font-family: 'Georgia', serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(8),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(8) { font-family: 'Impact', sans-serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(9),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(9) { font-family: 'Tahoma', sans-serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(10),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(10) { font-family: 'Times New Roman', serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(11),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(11) { font-family: 'Trebuchet MS', sans-serif !important; }
+
+    [role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) [role="option"]:nth-child(12),
+    ul[role="listbox"]:has(> :nth-child(12)):not(:has(> :nth-child(13))) li:nth-child(12) { font-family: 'Verdana', sans-serif !important; }
     </style>
     """,
     unsafe_allow_html=True
@@ -789,7 +836,14 @@ def show_configure_dialog():
                     "Trebuchet MS", 
                     "Verdana"
                 ]
-                font_name = st.selectbox("Font Name:", options=FONTS, index=0)
+                
+                # Check option in session state to resolve selectbox closed state style
+                default_font_preview = st.session_state.get("config_font_selectbox", "Arial")
+                    
+                # Setup wrapping container with dynamic font family inline styles
+                st.markdown(f'<div class="font-select-container" style="font-family: \'{default_font_preview}\' !important;">', unsafe_allow_html=True)
+                font_name = st.selectbox("Font Name:", options=FONTS, index=0, key="config_font_selectbox")
+                st.markdown('</div>', unsafe_allow_html=True)
                 st.markdown(f"""
                 <div style="background-color: #1E222B; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 8px;">
                     <span style="font-family: '{font_name}', sans-serif; font-size: 1.1rem; color: #E5E7EB; font-weight: 500;">
@@ -994,7 +1048,11 @@ def show_configure_dialog():
                         "Trebuchet MS", 
                         "Verdana"
                     ]
-                    font_name = st.selectbox("Font Name:", options=FONTS, index=FONTS.index(st.session_state.params["font_name"]))
+                    # Setup wrapping container with dynamic font family inline styles for Edit settings
+                    edit_font_preview = st.session_state.get("edit_font_selectbox", st.session_state.params["font_name"])
+                    st.markdown(f'<div class="font-select-container" style="font-family: \'{edit_font_preview}\' !important;">', unsafe_allow_html=True)
+                    font_name = st.selectbox("Font Name:", options=FONTS, index=FONTS.index(st.session_state.params["font_name"]), key="edit_font_selectbox")
+                    st.markdown('</div>', unsafe_allow_html=True)
                     st.session_state.params["font_name"] = font_name
                     st.markdown(f"""
                     <div style="background-color: #1E222B; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 8px;">
