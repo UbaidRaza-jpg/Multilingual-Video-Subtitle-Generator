@@ -422,11 +422,11 @@ LANGUAGES = {
     "Hindi (हिन्दी)": "hi",
     "Kannada (ಕನ್ನಡ)": "kn",
     "Malayalam (മലയാളം)": "ml",
-    "Marathi (मराठी)": "mr",
+    "Marathi (मраठी)": "mr",
     "Nepali (नेपाली)": "ne",
     "Punjabi (ਪੰਜਾਬੀ)": "pa",
     "Sindhi (سنڌي)": "sd",
-    "Sinhala (සිံহල)": "si",
+    "Sinhala (සිංহල)": "si",
     "Tamil (தமிழ்)": "ta",
     "Telugu (తెలుగు)": "te",
     "Urdu (اردو)": "ur",
@@ -501,6 +501,8 @@ if "processing_error" not in st.session_state:
     st.session_state.processing_error = None
 if "params" not in st.session_state:
     st.session_state.params = {}
+if "is_processing" not in st.session_state:
+    st.session_state.is_processing = False
 
 
 # Reset handler helper
@@ -512,133 +514,284 @@ def start_over():
     st.session_state.final_video_bytes = None
     st.session_state.processing_error = None
     st.session_state.params = {}
+    st.session_state.is_processing = False
     st.rerun()
 
 
 # Modal Configuration Dialog
 @st.dialog("Configure Subtitles", width="large")
 def show_configure_dialog():
-    st.markdown('<div class="custom-card-header">Select Styling, Language & Accuracy</div>', unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        ALIGNMENTS = {
-            "Bottom (Center)": 2,
-            "Top (Center)": 8,
-            "Middle (Center)": 5,
-            "Bottom Left": 1,
-            "Bottom Right": 3,
-            "Top Left": 7,
-            "Top Right": 9
-        }
-        align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=0)
-        align_code = ALIGNMENTS[align_name]
+    if st.session_state.is_processing:
+        # Hover loader directly inside the dialog while keeping the dims active
+        render_orbit_loader("Processing Subtitles", "AI is transcribing and translating your video inside the background queue...")
         
-    with col2:
-        SIZES = {
-            "Small (16px)": 16,
-            "Medium (20px)": 20,
-            "Large (24px)": 24,
-            "Extra Large (32px)": 32
-        }
-        size_name = st.selectbox("Font Size:", options=list(SIZES.keys()), index=1)
-        size_code = SIZES[size_name]
+        # Execute processing logic inside the configure dialog popup!
+        status_holder = st.empty()
         
-    with col3:
-        COLORS = {
-            "White": "&H00FFFFFF",
-            "Yellow": "&H0000FFFF",
-            "Cyan": "&H00FFFF00",
-            "Red": "&H000000FF",
-            "Green": "&H0000FF00",
-            "Blue": "&H00FF0000",
-            "Custom Color Picker...": "custom"
-        }
-        color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
-        if COLORS[color_name] == "custom":
-            chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
-            color_code = hex_to_ass_color(chosen_hex)
-        else:
-            color_code = COLORS[color_name]
-        
-    col_lang, col_acc, col_res = st.columns(3)
-    with col_lang:
-        target_lang_name = st.selectbox(
-            "Target Language:",
-            options=list(LANGUAGES.keys()),
-            index=list(LANGUAGES.keys()).index("English (Global)")
-        )
-        target_lang_code = LANGUAGES[target_lang_name]
-        
-    with col_acc:
-        ACCURACY_MODELS = {
-            "High Accuracy (Recommended)": "small",
-            "Fast / Standard Accuracy": "base"
-        }
-        accuracy_name = st.selectbox("Accuracy:", options=list(ACCURACY_MODELS.keys()), index=0)
-        model_size_code = ACCURACY_MODELS[accuracy_name]
-        
-    with col_res:
-        RESOLUTIONS = {
-            "Original Resolution (Fastest)": "original",
-            "Standard HD (720p)": "720p",
-            "Mobile Optimized (480p)": "480p"
-        }
-        res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=0)
-        resolution_cap_code = RESOLUTIONS[res_name]
-        
-    st.divider()
-    
-    # Real-time preview frame
-    st.markdown('<div class="custom-card-header">Instant Layout Preview</div>', unsafe_allow_html=True)
-    with st.spinner("Generating subtitle layout preview..."):
-        try:
-            if st.session_state.use_api:
-                params = {
-                    "alignment": align_code,
-                    "font_size": size_code,
-                    "font_color": color_code
+        if st.session_state.use_api:
+            # API Mode processing
+            try:
+                payload = {
+                    "target_language": st.session_state.params["target_lang_code"],
+                    "alignment": st.session_state.params["align_code"],
+                    "font_size": st.session_state.params["size_code"],
+                    "font_color": st.session_state.params["color_code"],
+                    "model_size": st.session_state.params["model_size_code"],
+                    "resolution_cap": st.session_state.params["resolution_cap_code"],
+                    "email": st.session_state.params.get("email")
                 }
-                preview_resp = requests.get(f"{API_URL}/preview/{st.session_state.video_id}", params=params)
-                if preview_resp.status_code == 200:
-                    st.image(preview_resp.content, caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
+                
+                response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
+                
+                if response.status_code != 200:
+                    st.error(f"Failed to trigger process: {response.text}")
+                    if st.button("Retry"):
+                        st.session_state.is_processing = False
+                        st.rerun()
                 else:
-                    st.warning(f"Could not load preview frame (HTTP {preview_resp.status_code})")
-            else:
-                if LOCAL_ENGINE_AVAILABLE:
-                    preview_filename = f"preview_{st.session_state.video_id}_{align_code}_{size_code}_{color_code.replace('&', '').replace('#', '')}.jpg"
-                    preview_filepath = os.path.join("temp_outputs", preview_filename)
-                    success = generate_subtitle_preview(
+                    task_data = response.json()
+                    task_id = task_data["task_id"]
+                    
+                    status = "queued"
+                    start_time = time.time()
+                    
+                    while status in ["queued", "processing", "uploaded"]:
+                        try:
+                            status_resp = requests.get(f"{API_URL}/status/{task_id}")
+                            if status_resp.status_code == 200:
+                                status_data = status_resp.json()
+                                status = status_data["status"]
+                                elapsed = time.time() - start_time
+                                
+                                if status in ["queued", "uploaded"]:
+                                    with status_holder:
+                                        render_orbit_loader("Queued in Queue", f"Waiting for background worker... (elapsed: {elapsed:.1f}s)")
+                                elif status == "processing":
+                                    with status_holder:
+                                        render_orbit_loader("AI Processing", f"Transcribing audio & translating speech... (elapsed: {elapsed:.1f}s)")
+                            else:
+                                with status_holder:
+                                    render_orbit_loader("Status Check", "Retrying server connection...")
+                        except Exception:
+                            with status_holder:
+                                render_orbit_loader("Interrupted", "Re-connecting to backend server...")
+                        time.sleep(2.5)
+                    
+                    if status == "completed":
+                        with status_holder:
+                            render_orbit_loader("Retrieving Video", "Completed successfully! Downloading output file...")
+                        
+                        download_url = f"{API_URL}/download/{task_id}"
+                        video_resp = requests.get(download_url)
+                        if video_resp.status_code == 200:
+                            st.session_state.final_video_bytes = video_resp.content
+                            st.session_state.is_processing = False
+                            st.session_state.step = "download"
+                            st.rerun()
+                        else:
+                            st.error("Failed to retrieve final subtitle output.")
+                            if st.button("Close"):
+                                st.session_state.is_processing = False
+                                st.rerun()
+                    elif status == "failed":
+                        try:
+                            status_resp = requests.get(f"{API_URL}/status/{task_id}")
+                            error_reason = status_resp.json().get("error", "Unknown error")
+                        except Exception:
+                            error_reason = "Unknown error"
+                        st.error(f"Subtitle generation failed: {error_reason}")
+                        if st.button("Close"):
+                            st.session_state.is_processing = False
+                            st.rerun()
+            except Exception as e:
+                st.error(f"Error occurred: {e}")
+                if st.button("Close"):
+                    st.session_state.is_processing = False
+                    st.rerun()
+        else:
+            # Standalone Local Processing inside Popup
+            if LOCAL_ENGINE_AVAILABLE:
+                try:
+                    output_filepath = process_video(
                         st.session_state.uploaded_filepath,
-                        align_code,
-                        size_code,
-                        color_code,
-                        preview_filepath
+                        st.session_state.params["target_lang_code"],
+                        st.session_state.params["align_code"],
+                        st.session_state.params["size_code"],
+                        st.session_state.params["color_code"],
+                        model_size=st.session_state.params["model_size_code"],
+                        resolution_cap=st.session_state.params["resolution_cap_code"]
                     )
-                    if success and os.path.exists(preview_filepath):
-                        with open(preview_filepath, "rb") as f:
-                            st.image(f.read(), caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
+                    
+                    if output_filepath and os.path.exists(output_filepath):
+                        with open(output_filepath, "rb") as f:
+                            st.session_state.final_video_bytes = f.read()
+                            
+                        # Send email if SMTP is configured
+                        if st.session_state.params.get("email"):
+                            send_standalone_email(
+                                st.session_state.params["email"],
+                                "completed",
+                                st.session_state.uploaded_filename
+                            )
+                            
+                        try:
+                            os.remove(output_filepath)
+                        except Exception:
+                            pass
+                            
+                        st.session_state.is_processing = False
+                        st.session_state.step = "download"
+                        st.rerun()
                     else:
-                        st.warning("Failed to generate subtitle preview locally.")
-                else:
-                    st.warning("Local engine is not available for standalone previews.")
-        except Exception as e:
-            st.warning(f"Error loading preview frame: {e}")
+                        raise Exception("Local process engine failed to export file.")
+                except Exception as err:
+                    st.error(f"Subtitle processing failed: {err}")
+                    if st.button("Close"):
+                        st.session_state.is_processing = False
+                        st.rerun()
+                finally:
+                    try:
+                        if os.path.exists(st.session_state.uploaded_filepath):
+                            os.remove(st.session_state.uploaded_filepath)
+                    except Exception:
+                        pass
+            else:
+                st.error("Local engine is not available for standalone processing.")
+                if st.button("Close"):
+                    st.session_state.is_processing = False
+                    st.rerun()
+    else:
+        # Standard configuration dialog view
+        st.markdown('<div class="custom-card-header">Select Styling, Language & Accuracy</div>', unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            ALIGNMENTS = {
+                "Bottom (Center)": 2,
+                "Top (Center)": 8,
+                "Middle (Center)": 5,
+                "Bottom Left": 1,
+                "Bottom Right": 3,
+                "Top Left": 7,
+                "Top Right": 9
+            }
+            align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=0)
+            align_code = ALIGNMENTS[align_name]
             
-    # Trigger Action Button
-    if st.button("Generate Subtitles"):
-        # Save selection parameters to session state and transition to processing
-        st.session_state.params = {
-            "target_lang_code": target_lang_code,
-            "align_code": align_code,
-            "size_code": size_code,
-            "color_code": color_code,
-            "model_size_code": model_size_code,
-            "resolution_cap_code": resolution_cap_code
-        }
-        st.session_state.step = "processing"
-        st.rerun()
+        with col2:
+            SIZES = {
+                "Small (16px)": 16,
+                "Medium (20px)": 20,
+                "Large (24px)": 24,
+                "Extra Large (32px)": 32
+            }
+            size_name = st.selectbox("Font Size:", options=list(SIZES.keys()), index=1)
+            size_code = SIZES[size_name]
+            
+        with col3:
+            COLORS = {
+                "White": "&H00FFFFFF",
+                "Yellow": "&H0000FFFF",
+                "Cyan": "&H00FFFF00",
+                "Red": "&H000000FF",
+                "Green": "&H0000FF00",
+                "Blue": "&H00FF0000",
+                "Custom Color Picker...": "custom"
+            }
+            color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
+            if COLORS[color_name] == "custom":
+                chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
+                color_code = hex_to_ass_color(chosen_hex)
+            else:
+                color_code = COLORS[color_name]
+            
+        col_lang, col_acc, col_res = st.columns(3)
+        with col_lang:
+            target_lang_name = st.selectbox(
+                "Target Language:",
+                options=list(LANGUAGES.keys()),
+                index=list(LANGUAGES.keys()).index("English (Global)")
+            )
+            target_lang_code = LANGUAGES[target_lang_name]
+            
+        with col_acc:
+            ACCURACY_MODELS = {
+                "High Accuracy (Recommended)": "small",
+                "Fast / Standard Accuracy": "base"
+            }
+            accuracy_name = st.selectbox("Accuracy:", options=list(ACCURACY_MODELS.keys()), index=0)
+            model_size_code = ACCURACY_MODELS[accuracy_name]
+            
+        with col_res:
+            RESOLUTIONS = {
+                "Original Resolution (Fastest)": "original",
+                "Standard HD (720p)": "720p",
+                "Mobile Optimized (480p)": "480p"
+            }
+            res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=0)
+            resolution_cap_code = RESOLUTIONS[res_name]
+            
+        st.divider()
+        
+        # Email notifier text input (Optional) - placed under options as requested
+        email_input = st.text_input(
+            "Email Address for Notifications (Optional):",
+            placeholder="Enter your email to receive a notification download link when complete.",
+            help="Ensure you configure the SMTP details in your .env file or Streamlit Cloud secrets to enable emails."
+        )
+        
+        st.divider()
+        
+        # Real-time preview frame
+        st.markdown('<div class="custom-card-header">Instant Layout Preview</div>', unsafe_allow_html=True)
+        with st.spinner("Generating subtitle layout preview..."):
+            try:
+                if st.session_state.use_api:
+                    params = {
+                        "alignment": align_code,
+                        "font_size": size_code,
+                        "font_color": color_code
+                    }
+                    preview_resp = requests.get(f"{API_URL}/preview/{st.session_state.video_id}", params=params)
+                    if preview_resp.status_code == 200:
+                        st.image(preview_resp.content, caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
+                    else:
+                        st.warning(f"Could not load preview frame (HTTP {preview_resp.status_code})")
+                else:
+                    if LOCAL_ENGINE_AVAILABLE:
+                        preview_filename = f"preview_{st.session_state.video_id}_{align_code}_{size_code}_{color_code.replace('&', '').replace('#', '')}.jpg"
+                        preview_filepath = os.path.join("temp_outputs", preview_filename)
+                        success = generate_subtitle_preview(
+                            st.session_state.uploaded_filepath,
+                            align_code,
+                            size_code,
+                            color_code,
+                            preview_filepath
+                        )
+                        if success and os.path.exists(preview_filepath):
+                            with open(preview_filepath, "rb") as f:
+                                st.image(f.read(), caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
+                        else:
+                            st.warning("Failed to generate subtitle preview locally.")
+                    else:
+                        st.warning("Local engine is not available for standalone previews.")
+            except Exception as e:
+                st.warning(f"Error loading preview frame: {e}")
+                
+        # Trigger Action Button
+        if st.button("Generate Subtitles"):
+            st.session_state.params = {
+                "target_lang_code": target_lang_code,
+                "align_code": align_code,
+                "size_code": size_code,
+                "color_code": color_code,
+                "model_size_code": model_size_code,
+                "resolution_cap_code": resolution_cap_code,
+                "email": email_input.strip() if email_input.strip() != "" else None
+            }
+            st.session_state.is_processing = True
+            st.rerun()
 
 
 # Modal Download and share Dialog
@@ -663,51 +816,6 @@ def show_download_dialog():
         
     st.divider()
     
-    # Optional SMTP notifier email field
-    st.markdown('<div class="custom-card-header">Send Copy to Email</div>', unsafe_allow_html=True)
-    email_input = st.text_input(
-        "Email Address:",
-        placeholder="Enter your email to receive a notification copy.",
-        help="Ensure SMTP details are configured in environment variables."
-    )
-    
-    if st.button("Send Email"):
-        if email_input.strip() != "":
-            with st.spinner("Sending email..."):
-                try:
-                    if st.session_state.use_api:
-                        # API email notifier call
-                        payload = {
-                            "target_language": st.session_state.params["target_lang_code"],
-                            "alignment": st.session_state.params["align_code"],
-                            "font_size": st.session_state.params["size_code"],
-                            "font_color": st.session_state.params["color_code"],
-                            "email": email_input.strip()
-                        }
-                        # We trigger processing with email option again just for notification
-                        # but since we already have the video, it is better to send locally or trigger a dummy task.
-                        # Wait, we can trigger the standalone SMTP helper if configured!
-                        # The standalone SMTP notifier helper reads environment variables directly.
-                        send_standalone_email(
-                            email_input.strip(),
-                            "completed",
-                            st.session_state.uploaded_filename
-                        )
-                        st.success("Notification email successfully queued.")
-                    else:
-                        send_standalone_email(
-                            email_input.strip(),
-                            "completed",
-                            st.session_state.uploaded_filename
-                        )
-                        st.success("Notification email successfully queued.")
-                except Exception as e:
-                    st.error(f"Failed to send email notification: {e}")
-        else:
-            st.warning("Please enter a valid email address.")
-            
-    st.divider()
-    
     # Button to start over and reset state machine
     if st.button("Upload Another Video"):
         start_over()
@@ -726,7 +834,6 @@ if st.session_state.step == "upload":
     )
 
     if uploaded_file:
-        # Determine upload path based on server settings
         if st.session_state.use_api:
             with st.spinner("Uploading video file to server..."):
                 try:
@@ -765,156 +872,12 @@ if st.session_state.step == "upload":
 # STEP 2: Customization Modal Dialog
 elif st.session_state.step == "configure":
     st.info("The customization options are open in the dialog popup overlay.")
-    if st.button("Re-open Configuration Dialog"):
-        show_configure_dialog()
-    else:
-        # Auto-trigger dialog
-        show_configure_dialog()
+    show_configure_dialog()
 
-# STEP 3: Video Processing Screen
-elif st.session_state.step == "processing":
-    status_holder = st.empty()
-    
-    if st.session_state.use_api:
-        # API Mode processing
-        try:
-            with status_holder:
-                render_orbit_loader("Submitting Task", "Uploading configuration details to server queue...")
-                
-            payload = {
-                "target_language": st.session_state.params["target_lang_code"],
-                "alignment": st.session_state.params["align_code"],
-                "font_size": st.session_state.params["size_code"],
-                "font_color": st.session_state.params["color_code"],
-                "model_size": st.session_state.params["model_size_code"],
-                "resolution_cap": st.session_state.params["resolution_cap_code"]
-            }
-            response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
-            
-            if response.status_code != 200:
-                st.error(f"Failed to trigger process. Server responded with: {response.text}")
-                if st.button("Start Over"):
-                    start_over()
-            else:
-                task_data = response.json()
-                task_id = task_data["task_id"]
-                
-                # Polling loop
-                status = "queued"
-                start_time = time.time()
-                
-                while status in ["queued", "processing", "uploaded"]:
-                    try:
-                        status_resp = requests.get(f"{API_URL}/status/{task_id}")
-                        if status_resp.status_code == 200:
-                            status_data = status_resp.json()
-                            status = status_data["status"]
-                            elapsed = time.time() - start_time
-                            
-                            if status in ["queued", "uploaded"]:
-                                with status_holder:
-                                    render_orbit_loader("Queued in Queue", f"Waiting for background worker... (elapsed: {elapsed:.1f}s)")
-                            elif status == "processing":
-                                with status_holder:
-                                    render_orbit_loader("AI Processing", f"Transcribing audio & translating subtitles... (elapsed: {elapsed:.1f}s)")
-                        else:
-                            with status_holder:
-                                render_orbit_loader("Server Status Check", "Retrying server status link...")
-                    except Exception as poll_err:
-                        with status_holder:
-                            render_orbit_loader("Connection Interrupted", "Re-connecting to backend server...")
-                    time.sleep(3)
-                
-                if status == "completed":
-                    with status_holder:
-                        render_orbit_loader("Completed!", "Retrieving finalized video file from server...")
-                    
-                    # Download video bytes
-                    download_url = f"{API_URL}/download/{task_id}"
-                    try:
-                        video_resp = requests.get(download_url)
-                        if video_resp.status_code == 200:
-                            st.session_state.final_video_bytes = video_resp.content
-                            st.session_state.step = "download"
-                            st.rerun()
-                        else:
-                            raise Exception(f"Download failed (HTTP {video_resp.status_code})")
-                    except Exception as dl_err:
-                        st.error(f"Failed to retrieve subtitled file: {dl_err}")
-                        if st.button("Start Over"):
-                            start_over()
-                elif status == "failed":
-                    try:
-                        status_resp = requests.get(f"{API_URL}/status/{task_id}")
-                        error_reason = status_resp.json().get("error", "Unknown error")
-                    except Exception:
-                        error_reason = "Unknown error"
-                    st.error(f"Subtitle generation failed: {error_reason}")
-                    if st.button("Start Over"):
-                        start_over()
-                        
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-            if st.button("Start Over"):
-                start_over()
-    else:
-        # Standalone Mode processing
-        if LOCAL_ENGINE_AVAILABLE:
-            try:
-                with status_holder:
-                    render_orbit_loader("AI Processing (Local)", "Running locally (Step 1/3: Transcribing audio & speech)...")
-                
-                output_filepath = process_video(
-                    st.session_state.uploaded_filepath,
-                    st.session_state.params["target_lang_code"],
-                    st.session_state.params["align_code"],
-                    st.session_state.params["size_code"],
-                    st.session_state.params["color_code"],
-                    model_size=st.session_state.params["model_size_code"],
-                    resolution_cap=st.session_state.params["resolution_cap_code"]
-                )
-                
-                if output_filepath and os.path.exists(output_filepath):
-                    with status_holder:
-                        render_orbit_loader("Completed!", "Finalizing file in memory...")
-                    
-                    with open(output_filepath, "rb") as f:
-                        st.session_state.final_video_bytes = f.read()
-                        
-                    # Clean up local generated output video
-                    try:
-                        os.remove(output_filepath)
-                    except Exception:
-                        pass
-                        
-                    st.session_state.step = "download"
-                    st.rerun()
-                else:
-                    raise Exception("Local process engine returned an empty output path.")
-            except Exception as err:
-                st.error(f"Subtitle generation failed: {err}")
-                if st.button("Start Over"):
-                    start_over()
-            finally:
-                # Clean up uploaded file
-                try:
-                    if os.path.exists(st.session_state.uploaded_filepath):
-                        os.remove(st.session_state.uploaded_filepath)
-                except Exception:
-                    pass
-        else:
-            st.error("Local engine is not available to run standalone processing.")
-            if st.button("Start Over"):
-                start_over()
-
-# STEP 4: Success & Download Screen Modal Dialog
+# STEP 3: Success & Download Screen Modal Dialog
 elif st.session_state.step == "download":
     st.info("The finalized video is ready in the popup download overlay.")
-    if st.button("Re-open Download & Share Dialog"):
-        show_download_dialog()
-    else:
-        # Auto-trigger dialog
-        show_download_dialog()
+    show_download_dialog()
 
 
 st.divider()
