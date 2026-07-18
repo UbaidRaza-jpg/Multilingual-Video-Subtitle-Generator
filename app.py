@@ -46,13 +46,27 @@ st.markdown(
         line-height: 1.5;
     }
 
+    /* Dialog Style Overrides (Glassmorphism + Dark Mode) */
+    div[role="dialog"] {
+        background-color: #161922 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+        padding: 30px !important;
+    }
+
+    div[role="dialog"] h1, div[role="dialog"] h2, div[role="dialog"] h3 {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        color: white !important;
+    }
+
     /* Sleek Card Headers */
     .custom-card-header {
         font-weight: 700;
         font-family: 'Plus Jakarta Sans', sans-serif;
         color: #FFFFFF;
         font-size: 1.35rem;
-        margin-top: 1.5rem;
+        margin-top: 0.5rem;
         margin-bottom: 1rem;
         letter-spacing: -0.2px;
     }
@@ -62,9 +76,10 @@ st.markdown(
         background: rgba(26, 29, 36, 0.6) !important;
         border: 2px dashed rgba(168, 85, 247, 0.35) !important;
         border-radius: 16px !important;
-        padding: 24px !important;
+        padding: 40px 24px !important;
         transition: all 0.3s ease !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+        text-align: center;
     }
 
     div[data-testid="stFileUploader"]:hover {
@@ -315,7 +330,7 @@ LANGUAGES = {
     "Nepali (नेपाली)": "ne",
     "Punjabi (ਪੰਜਾਬੀ)": "pa",
     "Sindhi (سنڌي)": "sd",
-    "Sinhala (සිංহල)": "si",
+    "Sinhala (සිံহල)": "si",
     "Tamil (தமிழ்)": "ta",
     "Telugu (తెలుగు)": "te",
     "Urdu (اردو)": "ur",
@@ -328,7 +343,7 @@ LANGUAGES = {
     "Javanese (Jawa)": "jw",
     "Khmer (ខ្មែរ)": "km",
     "Korean (한국어)": "ko",
-    "Lao (ລາວ)": "lo",
+    "Lao (лау)": "lo",
     "Malay (Bahasa Melayu)": "ms",
     "Mongolian (Монгол)": "mn",
     "Sundanese (Sunda)": "su",
@@ -375,71 +390,43 @@ if st.session_state.use_api:
 
 st.divider()
 
-# Initialize session state variables
+# Initialize state machine variables
+if "step" not in st.session_state:
+    st.session_state.step = "upload"
 if "video_id" not in st.session_state:
     st.session_state.video_id = None
 if "uploaded_filename" not in st.session_state:
     st.session_state.uploaded_filename = None
 if "uploaded_filepath" not in st.session_state:
     st.session_state.uploaded_filepath = None
+if "final_video_bytes" not in st.session_state:
+    st.session_state.final_video_bytes = None
+if "processing_error" not in st.session_state:
+    st.session_state.processing_error = None
+if "params" not in st.session_state:
+    st.session_state.params = {}
 
-# Form inputs
-uploaded_file = st.file_uploader(
-    "Choose a video file...", 
-    type=["mp4", "mov", "avi", "mkv"],
-    help="Upload your video file (MP4, MOV, AVI, or MKV)."
-)
 
-# Detect change in uploaded file
-if uploaded_file:
-    if uploaded_file.name != st.session_state.uploaded_filename:
-        # Reset previous state
-        st.session_state.video_id = None
-        st.session_state.uploaded_filename = None
-        st.session_state.uploaded_filepath = None
-        
-        # Determine upload action based on mode
-        if st.session_state.use_api:
-            with st.spinner("Uploading video file to server..."):
-                try:
-                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                    r = requests.post(f"{API_URL}/upload", files=files)
-                    if r.status_code == 200:
-                        res = r.json()
-                        st.session_state.video_id = res["video_id"]
-                        st.session_state.uploaded_filename = uploaded_file.name
-                        st.success("Video uploaded successfully!")
-                    else:
-                        st.error(f"Upload failed (HTTP {r.status_code}): {r.text}")
-                except Exception as e:
-                    st.error(f"Error uploading file: {e}")
-        else:
-            # Standalone mode: save local file copy
-            with st.spinner("Saving uploaded file locally..."):
-                try:
-                    st.session_state.video_id = str(uuid.uuid4())
-                    st.session_state.uploaded_filename = uploaded_file.name
-                    
-                    os.makedirs("uploads", exist_ok=True)
-                    file_ext = os.path.splitext(uploaded_file.name)[1].lower()
-                    temp_filepath = os.path.join("uploads", f"standalone_{st.session_state.video_id}{file_ext}")
-                    
-                    with open(temp_filepath, "wb") as f:
-                        f.write(uploaded_file.getvalue())
-                        
-                    st.session_state.uploaded_filepath = temp_filepath
-                    st.success("Video saved successfully!")
-                except Exception as e:
-                    st.error(f"Error saving file: {e}")
+# Reset handler helper
+def start_over():
+    st.session_state.step = "upload"
+    st.session_state.video_id = None
+    st.session_state.uploaded_filename = None
+    st.session_state.uploaded_filepath = None
+    st.session_state.final_video_bytes = None
+    st.session_state.processing_error = None
+    st.session_state.params = {}
+    st.rerun()
 
-# If file is uploaded and processed, show preview and options
-if st.session_state.video_id:
-    st.markdown('<div class="custom-card-header">Configure Subtitle Styling & Position</div>', unsafe_allow_html=True)
+
+# Modal Configuration Dialog
+@st.dialog("Configure Subtitles", width="large")
+def show_configure_dialog():
+    st.markdown('<div class="custom-card-header">Select Styling, Language & Accuracy</div>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Subtitle alignments
         ALIGNMENTS = {
             "Bottom (Center)": 2,
             "Top (Center)": 8,
@@ -449,30 +436,20 @@ if st.session_state.video_id:
             "Top Left": 7,
             "Top Right": 9
         }
-        align_name = st.selectbox(
-            "Select Subtitle Position:",
-            options=list(ALIGNMENTS.keys()),
-            index=0  # Defaults to Bottom (Center)
-        )
+        align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=0)
         align_code = ALIGNMENTS[align_name]
         
     with col2:
-        # Font Sizes
         SIZES = {
             "Small (16px)": 16,
             "Medium (20px)": 20,
             "Large (24px)": 24,
             "Extra Large (32px)": 32
         }
-        size_name = st.selectbox(
-            "Select Font Size:",
-            options=list(SIZES.keys()),
-            index=1  # Defaults to Medium (20px)
-        )
+        size_name = st.selectbox("Font Size:", options=list(SIZES.keys()), index=1)
         size_code = SIZES[size_name]
         
     with col3:
-        # Font Colors (ASS BGR format)
         COLORS = {
             "White": "&H00FFFFFF",
             "Yellow": "&H0000FFFF",
@@ -481,15 +458,40 @@ if st.session_state.video_id:
             "Green": "&H0000FF00",
             "Blue": "&H00FF0000"
         }
-        color_name = st.selectbox(
-            "Select Subtitle Color:",
-            options=list(COLORS.keys()),
-            index=0  # Defaults to White
-        )
+        color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
         color_code = COLORS[color_name]
+        
+    col_lang, col_acc, col_res = st.columns(3)
+    with col_lang:
+        target_lang_name = st.selectbox(
+            "Target Language:",
+            options=list(LANGUAGES.keys()),
+            index=list(LANGUAGES.keys()).index("English (Global)")
+        )
+        target_lang_code = LANGUAGES[target_lang_name]
+        
+    with col_acc:
+        ACCURACY_MODELS = {
+            "High Accuracy (Recommended)": "small",
+            "Fast / Standard Accuracy": "base"
+        }
+        accuracy_name = st.selectbox("Accuracy:", options=list(ACCURACY_MODELS.keys()), index=0)
+        model_size_code = ACCURACY_MODELS[accuracy_name]
+        
+    with col_res:
+        RESOLUTIONS = {
+            "Original Resolution (Fastest)": "original",
+            "Standard HD (720p)": "720p",
+            "Mobile Optimized (480p)": "480p"
+        }
+        res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=0)
+        resolution_cap_code = RESOLUTIONS[res_name]
+        
+    st.divider()
     
-    # Render Preview
-    with st.spinner("Loading subtitle preview frame..."):
+    # Real-time preview frame
+    st.markdown('<div class="custom-card-header">Instant Layout Preview</div>', unsafe_allow_html=True)
+    with st.spinner("Generating subtitle layout preview..."):
         try:
             if st.session_state.use_api:
                 params = {
@@ -501,9 +503,8 @@ if st.session_state.video_id:
                 if preview_resp.status_code == 200:
                     st.image(preview_resp.content, caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
                 else:
-                    st.warning(f"Could not load preview frame (HTTP {preview_resp.status_code}): {preview_resp.text}")
+                    st.warning(f"Could not load preview frame (HTTP {preview_resp.status_code})")
             else:
-                # Standalone preview generation
                 if LOCAL_ENGINE_AVAILABLE:
                     preview_filename = f"preview_{st.session_state.video_id}_{align_code}_{size_code}_{color_code.replace('&', '').replace('#', '')}.jpg"
                     preview_filepath = os.path.join("temp_outputs", preview_filename)
@@ -524,236 +525,296 @@ if st.session_state.video_id:
         except Exception as e:
             st.warning(f"Error loading preview frame: {e}")
             
-    st.divider()
-    st.markdown('<div class="custom-card-header">Select Language, Accuracy & Resolution</div>', unsafe_allow_html=True)
+    # Trigger Action Button
+    if st.button("Generate Subtitles"):
+        # Save selection parameters to session state and transition to processing
+        st.session_state.params = {
+            "target_lang_code": target_lang_code,
+            "align_code": align_code,
+            "size_code": size_code,
+            "color_code": color_code,
+            "model_size_code": model_size_code,
+            "resolution_cap_code": resolution_cap_code
+        }
+        st.session_state.step = "processing"
+        st.rerun()
+
+
+# Modal Download and share Dialog
+@st.dialog("Download & Share Subtitled Video", width="large")
+def show_download_dialog():
+    st.markdown('<div class="custom-card-header">Your Video is Ready!</div>', unsafe_allow_html=True)
     
-    col_lang, col_acc, col_res = st.columns(3)
-    with col_lang:
-        target_lang_name = st.selectbox(
-            "Select Target Language:",
-            options=list(LANGUAGES.keys()),
-            index=list(LANGUAGES.keys()).index("English (Global)")
-        )
-        target_lang_code = LANGUAGES[target_lang_name]
+    # Subtitled video player
+    if st.session_state.final_video_bytes:
+        st.video(st.session_state.final_video_bytes)
         
-    with col_acc:
-        ACCURACY_MODELS = {
-            "High Accuracy (Recommended)": "small",
-            "Fast / Standard Accuracy": "base"
-        }
-        accuracy_name = st.selectbox(
-            "Select Accuracy:",
-            options=list(ACCURACY_MODELS.keys()),
-            index=0
+        # Download button
+        output_filename = f"{os.path.splitext(st.session_state.uploaded_filename)[0]}_subtitled.mp4"
+        st.download_button(
+            label="Download Subtitled Video",
+            data=st.session_state.final_video_bytes,
+            file_name=output_filename,
+            mime="video/mp4"
         )
-        model_size_code = ACCURACY_MODELS[accuracy_name]
+    else:
+        st.error("No completed video file found in session memory.")
         
-    with col_res:
-        RESOLUTIONS = {
-            "Original Resolution (Fastest)": "original",
-            "Standard HD (720p)": "720p",
-            "Mobile Optimized (480p)": "480p"
-        }
-        res_name = st.selectbox(
-            "Select Export Resolution:",
-            options=list(RESOLUTIONS.keys()),
-            index=0
-        )
-        resolution_cap_code = RESOLUTIONS[res_name]
-        
+    st.divider()
+    
+    # Optional SMTP notifier email field
+    st.markdown('<div class="custom-card-header">Send Copy to Email</div>', unsafe_allow_html=True)
     email_input = st.text_input(
-        "Email Address for Notifications (Optional):",
-        placeholder="Enter your email to receive a notification download link when complete.",
-        help="Ensure you configure the SMTP details in your .env file or Streamlit Cloud secrets to enable emails."
+        "Email Address:",
+        placeholder="Enter your email to receive a notification copy.",
+        help="Ensure SMTP details are configured in environment variables."
     )
     
-    # Action Button
-    if st.button("Generate Subtitles", use_container_width=True):
-        st.info("Triggering subtitle generation...")
-        
-        if st.session_state.use_api:
-            # ---------------------------------------------
-            # Mode A: API processing
-            # ---------------------------------------------
-            try:
-                payload = {
-                    "target_language": target_lang_code,
-                    "alignment": align_code,
-                    "font_size": size_code,
-                    "font_color": color_code,
-                    "email": email_input.strip() if email_input.strip() != "" else None,
-                    "model_size": model_size_code,
-                    "resolution_cap": resolution_cap_code
-                }
-                response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
-                
-                if response.status_code != 200:
-                    st.error(f"Failed to trigger process. Server responded with: {response.text}")
-                else:
-                    task_data = response.json()
-                    task_id = task_data["task_id"]
-                    st.success("Subtitle generation queued in the background.")
-                    
-                    # Polling loop
-                    status = "queued"
-                    status_box = st.empty()
-                    progress_bar = st.progress(0)
-                    
-                    with st.spinner("Processing video (Transcribing, translating, and burning subtitles)..."):
-                        start_time = time.time()
-                        
-                        while status in ["queued", "processing", "uploaded"]:
-                            try:
-                                # Poll the status endpoint
-                                status_resp = requests.get(f"{API_URL}/status/{task_id}")
-                                if status_resp.status_code == 200:
-                                    status_data = status_resp.json()
-                                    status = status_data["status"]
-                                    elapsed = time.time() - start_time
-                                    
-                                    # Update progress bar and text status
-                                    if status in ["queued", "uploaded"]:
-                                        status_box.info(f"Status: Queued (Waiting for worker...) | Time elapsed: {elapsed:.1f}s")
-                                        progress_bar.progress(10)
-                                    elif status == "processing":
-                                        status_box.info(f"Status: Processing (Transcribing & Translating...) | Time elapsed: {elapsed:.1f}s")
-                                        progress_bar.progress(50)
-                                else:
-                                    status_box.warning(f"Warning: Failed to poll status (HTTP {status_resp.status_code}). Retrying...")
-                            except Exception as poll_err:
-                                status_box.warning(f"Connection warning: {poll_err}. Retrying status poll...")
-                                
-                            # Wait before polling again
-                            time.sleep(3)
-                    
-                    # Final Task resolution
-                    if status == "completed":
-                        progress_bar.progress(100)
-                        status_box.success("Subtitle generation completed successfully!")
-                        
-                        # Download final video bytes to serve locally in streamlit
-                        download_url = f"{API_URL}/download/{task_id}"
-                        with st.spinner("Downloading subtitled video from API..."):
-                            try:
-                                video_resp = requests.get(download_url)
-                                if video_resp.status_code == 200:
-                                    video_bytes = video_resp.content
-                                    
-                                    # Display native video player
-                                    st.markdown('<div class="custom-card-header">Preview Subtitled Video</div>', unsafe_allow_html=True)
-                                    st.video(video_bytes)
-                                    
-                                    # Provide download button
-                                    output_filename = f"{os.path.splitext(uploaded_file.name)[0]}_subtitled_{target_lang_code}.mp4"
-                                    st.download_button(
-                                        label="Download Subtitled Video",
-                                        data=video_bytes,
-                                        file_name=output_filename,
-                                        mime="video/mp4",
-                                        use_container_width=True
-                                    )
-                                else:
-                                    st.error(f"Failed to download finished video from server: {video_resp.status_code}")
-                            except Exception as dl_err:
-                                st.error(f"Error fetching finalized video: {dl_err}")
-                                
-                    elif status == "failed":
-                        progress_bar.progress(0)
-                        try:
-                            status_resp = requests.get(f"{API_URL}/status/{task_id}")
-                            error_reason = status_resp.json().get("error", "Unknown error")
-                        except Exception:
-                            error_reason = "Unknown error"
-                        st.error(f"Subtitle generation failed: {error_reason}")
-                        
-            except requests.exceptions.ConnectionError:
-                st.error("Could not connect to backend server. Please verify FastAPI is running on http://localhost:8000.")
-            except Exception as e:
-                st.error(f"An unexpected error occurred: {e}")
-        else:
-            # ---------------------------------------------
-            # Mode B: Standalone local container processing
-            # ---------------------------------------------
-            if LOCAL_ENGINE_AVAILABLE:
-                status_box = st.empty()
-                progress_bar = st.progress(0)
-                
-                with st.spinner("Processing video locally... (this might take a few minutes depending on CPU)"):
-                    try:
-                        status_box.info("Step 1/3: Transcribing & Translating speech...")
-                        progress_bar.progress(30)
-                        
-                        # Process video locally and synchronously
-                        output_filepath = process_video(
-                            st.session_state.uploaded_filepath,
-                            target_lang_code,
-                            align_code,
-                            size_code,
-                            color_code,
-                            model_size=model_size_code,
-                            resolution_cap=resolution_cap_code
+    if st.button("Send Email"):
+        if email_input.strip() != "":
+            with st.spinner("Sending email..."):
+                try:
+                    if st.session_state.use_api:
+                        # API email notifier call
+                        payload = {
+                            "target_language": st.session_state.params["target_lang_code"],
+                            "alignment": st.session_state.params["align_code"],
+                            "font_size": st.session_state.params["size_code"],
+                            "font_color": st.session_state.params["color_code"],
+                            "email": email_input.strip()
+                        }
+                        # We trigger processing with email option again just for notification
+                        # but since we already have the video, it is better to send locally or trigger a dummy task.
+                        # Wait, we can trigger the standalone SMTP helper if configured!
+                        # The standalone SMTP notifier helper reads environment variables directly.
+                        send_standalone_email(
+                            email_input.strip(),
+                            "completed",
+                            st.session_state.uploaded_filename
                         )
+                        st.success("Notification email successfully queued.")
+                    else:
+                        send_standalone_email(
+                            email_input.strip(),
+                            "completed",
+                            st.session_state.uploaded_filename
+                        )
+                        st.success("Notification email successfully queued.")
+                except Exception as e:
+                    st.error(f"Failed to send email notification: {e}")
+        else:
+            st.warning("Please enter a valid email address.")
+            
+    st.divider()
+    
+    # Button to start over and reset state machine
+    if st.button("Upload Another Video"):
+        start_over()
+
+
+# =========================================================================
+# STATE MACHINE EXECUTION FLOW
+# =========================================================================
+
+# STEP 1: Upload Screen
+if st.session_state.step == "upload":
+    uploaded_file = st.file_uploader(
+        "Choose a video file...", 
+        type=["mp4", "mov", "avi", "mkv"],
+        help="Upload your video file (MP4, MOV, AVI, or MKV)."
+    )
+
+    if uploaded_file:
+        # Determine upload path based on server settings
+        if st.session_state.use_api:
+            with st.spinner("Uploading video file to server..."):
+                try:
+                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                    r = requests.post(f"{API_URL}/upload", files=files)
+                    if r.status_code == 200:
+                        res = r.json()
+                        st.session_state.video_id = res["video_id"]
+                        st.session_state.uploaded_filename = uploaded_file.name
+                        st.session_state.step = "configure"
+                        st.rerun()
+                    else:
+                        st.error(f"Upload failed (HTTP {r.status_code}): {r.text}")
+                except Exception as e:
+                    st.error(f"Error uploading file: {e}")
+        else:
+            # Standalone mode: save local file copy
+            with st.spinner("Saving uploaded file locally..."):
+                try:
+                    st.session_state.video_id = str(uuid.uuid4())
+                    st.session_state.uploaded_filename = uploaded_file.name
+                    
+                    os.makedirs("uploads", exist_ok=True)
+                    file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+                    temp_filepath = os.path.join("uploads", f"standalone_{st.session_state.video_id}{file_ext}")
+                    
+                    with open(temp_filepath, "wb") as f:
+                        f.write(uploaded_file.getvalue())
                         
-                        if output_filepath and os.path.exists(output_filepath):
-                            progress_bar.progress(100)
-                            status_box.success("Subtitle generation completed successfully!")
-                            
-                            # Read final video bytes
-                            with open(output_filepath, "rb") as f:
-                                video_bytes = f.read()
-                                
-                            # Display player
-                            st.markdown('<div class="custom-card-header">Preview Subtitled Video</div>', unsafe_allow_html=True)
-                            st.video(video_bytes)
-                            
-                            # Provide download button
-                            output_filename = f"{os.path.splitext(uploaded_file.name)[0]}_subtitled_{target_lang_code}.mp4"
-                            st.download_button(
-                                label="Download Subtitled Video",
-                                data=video_bytes,
-                                file_name=output_filename,
-                                mime="video/mp4",
-                                use_container_width=True
-                            )
-                            
-                            # Send Email Notification
-                            if email_input.strip() != "":
-                                status_box.info("Sending email notification...")
-                                send_standalone_email(
-                                    email_input.strip(),
-                                    "completed",
-                                    uploaded_file.name
-                                )
-                                status_box.success("Completed and notification email sent!")
-                                
-                            # Clean up generated video to save space
-                            try:
-                                os.remove(output_filepath)
-                            except Exception:
-                                pass
-                        else:
-                            raise Exception("Local subtitle burning engine returned empty output path.")
-                    except Exception as err:
-                        progress_bar.progress(0)
-                        status_box.error(f"Subtitle generation failed: {err}")
-                        
-                        # Send Failure Email
-                        if email_input.strip() != "":
-                            send_standalone_email(
-                                email_input.strip(),
-                                "failed",
-                                uploaded_file.name,
-                                error_reason=str(err)
-                            )
-                    finally:
-                        # Clean up temp uploaded file
-                        try:
-                            if os.path.exists(st.session_state.uploaded_filepath):
-                                os.remove(st.session_state.uploaded_filepath)
-                        except Exception:
-                            pass
+                    st.session_state.uploaded_filepath = temp_filepath
+                    st.session_state.step = "configure"
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error saving file: {e}")
+
+# STEP 2: Customization Modal Dialog
+elif st.session_state.step == "configure":
+    st.info("The customization options are open in the dialog popup overlay.")
+    if st.button("Re-open Configuration Dialog"):
+        show_configure_dialog()
+    else:
+        # Auto-trigger dialog
+        show_configure_dialog()
+
+# STEP 3: Video Processing Screen
+elif st.session_state.step == "processing":
+    st.markdown('<div class="custom-card-header">Generating Subtitles...</div>', unsafe_allow_html=True)
+    status_box = st.empty()
+    progress_bar = st.progress(0)
+    
+    if st.session_state.use_api:
+        # API Mode processing
+        try:
+            payload = {
+                "target_language": st.session_state.params["target_lang_code"],
+                "alignment": st.session_state.params["align_code"],
+                "font_size": st.session_state.params["size_code"],
+                "font_color": st.session_state.params["color_code"],
+                "model_size": st.session_state.params["model_size_code"],
+                "resolution_cap": st.session_state.params["resolution_cap_code"]
+            }
+            response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
+            
+            if response.status_code != 200:
+                st.error(f"Failed to trigger process. Server responded with: {response.text}")
+                if st.button("Start Over"):
+                    start_over()
             else:
-                st.error("Local engine is not available to run standalone processing.")
+                task_data = response.json()
+                task_id = task_data["task_id"]
+                
+                # Polling loop
+                status = "queued"
+                start_time = time.time()
+                
+                while status in ["queued", "processing", "uploaded"]:
+                    try:
+                        status_resp = requests.get(f"{API_URL}/status/{task_id}")
+                        if status_resp.status_code == 200:
+                            status_data = status_resp.json()
+                            status = status_data["status"]
+                            elapsed = time.time() - start_time
+                            
+                            if status in ["queued", "uploaded"]:
+                                status_box.info(f"Status: Queued (Waiting for worker...) | Time elapsed: {elapsed:.1f}s")
+                                progress_bar.progress(15)
+                            elif status == "processing":
+                                status_box.info(f"Status: Processing (Transcribing & Translating...) | Time elapsed: {elapsed:.1f}s")
+                                progress_bar.progress(60)
+                        else:
+                            status_box.warning("Warning: Failed to retrieve task status. Retrying...")
+                    except Exception as poll_err:
+                        status_box.warning(f"Connection warning: {poll_err}. Retrying status poll...")
+                    time.sleep(3)
+                
+                if status == "completed":
+                    progress_bar.progress(100)
+                    status_box.success("Subtitle generation completed successfully!")
+                    
+                    # Download video bytes
+                    download_url = f"{API_URL}/download/{task_id}"
+                    with st.spinner("Downloading subtitled video..."):
+                        try:
+                            video_resp = requests.get(download_url)
+                            if video_resp.status_code == 200:
+                                st.session_state.final_video_bytes = video_resp.content
+                                st.session_state.step = "download"
+                                st.rerun()
+                            else:
+                                raise Exception(f"Download failed (HTTP {video_resp.status_code})")
+                        except Exception as dl_err:
+                            st.error(f"Failed to retrieve subtitled file: {dl_err}")
+                            if st.button("Start Over"):
+                                start_over()
+                elif status == "failed":
+                    progress_bar.progress(0)
+                    try:
+                        status_resp = requests.get(f"{API_URL}/status/{task_id}")
+                        error_reason = status_resp.json().get("error", "Unknown error")
+                    except Exception:
+                        error_reason = "Unknown error"
+                    st.error(f"Subtitle generation failed: {error_reason}")
+                    if st.button("Start Over"):
+                        start_over()
+                        
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+            if st.button("Start Over"):
+                start_over()
+    else:
+        # Standalone Mode processing
+        if LOCAL_ENGINE_AVAILABLE:
+            try:
+                status_box.info("Step 1/3: Transcribing & Translating speech...")
+                progress_bar.progress(30)
+                
+                output_filepath = process_video(
+                    st.session_state.uploaded_filepath,
+                    st.session_state.params["target_lang_code"],
+                    st.session_state.params["align_code"],
+                    st.session_state.params["size_code"],
+                    st.session_state.params["color_code"],
+                    model_size=st.session_state.params["model_size_code"],
+                    resolution_cap=st.session_state.params["resolution_cap_code"]
+                )
+                
+                if output_filepath and os.path.exists(output_filepath):
+                    progress_bar.progress(100)
+                    status_box.success("Subtitle generation completed successfully!")
+                    
+                    with open(output_filepath, "rb") as f:
+                        st.session_state.final_video_bytes = f.read()
+                        
+                    # Clean up local generated output video
+                    try:
+                        os.remove(output_filepath)
+                    except Exception:
+                        pass
+                        
+                    st.session_state.step = "download"
+                    st.rerun()
+                else:
+                    raise Exception("Local process engine returned an empty output path.")
+            except Exception as err:
+                progress_bar.progress(0)
+                st.error(f"Subtitle generation failed: {err}")
+                if st.button("Start Over"):
+                    start_over()
+            finally:
+                # Clean up uploaded file
+                try:
+                    if os.path.exists(st.session_state.uploaded_filepath):
+                        os.remove(st.session_state.uploaded_filepath)
+                except Exception:
+                    pass
+        else:
+            st.error("Local engine is not available to run standalone processing.")
+            if st.button("Start Over"):
+                start_over()
+
+# STEP 4: Success & Download Screen Modal Dialog
+elif st.session_state.step == "download":
+    st.info("The finalized video is ready in the popup download overlay.")
+    if st.button("Re-open Download & Share Dialog"):
+        show_download_dialog()
+    else:
+        # Auto-trigger dialog
+        show_download_dialog()
+
 
 st.divider()
 st.caption("Powered by faster-whisper, googletrans, and ffmpeg locally.")
