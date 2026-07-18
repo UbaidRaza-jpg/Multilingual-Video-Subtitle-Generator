@@ -250,18 +250,113 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
 
 # Language mapping
 LANGUAGES = {
+    # English & Regional Dialects
+    "English (Global)": "en",
+    "English (Australian)": "en",
+    "English (British)": "en",
+    "English (American)": "en",
+    
+    # Western & Central European
     "Spanish (Español)": "es",
     "French (Français)": "fr",
     "German (Deutsch)": "de",
-    "Urdu (اردو)": "ur",
-    "Hindi (हिन्दी)": "hi",
-    "Arabic (العربية)": "ar",
-    "Chinese Simplified (简体中文)": "zh-cn",
-    "Japanese (日本語)": "ja",
     "Italian (Italiano)": "it",
     "Portuguese (Português)": "pt",
+    "Dutch (Nederlands)": "nl",
+    "Afrikaans": "af",
+    "Basque (Euskara)": "eu",
+    "Catalan (Català)": "ca",
+    "Galician (Galego)": "gl",
+    "Icelandic (Íslenska)": "is",
+    "Latin (Latina)": "la",
+    "Luxembourgish (Lëtzebuergesch)": "lb",
+    "Welsh (Cymraeg)": "cy",
+    
+    # Eastern European & Slavic
+    "Albanian (Shqip)": "sq",
+    "Belarusian (Беларуская)": "be",
+    "Bosnian (Bosanski)": "bs",
+    "Bulgarian (Български)": "bg",
+    "Croatian (Hrvatski)": "hr",
+    "Czech (Čeština)": "cs",
+    "Estonian (Eesti)": "et",
+    "Hungarian (Magyar)": "hu",
+    "Latvian (Latviešu)": "lv",
+    "Lithuanian (Lietuvių)": "lt",
+    "Macedonian (Македонски)": "mk",
+    "Polish (Polski)": "pl",
+    "Romanian (Română)": "ro",
     "Russian (Русский)": "ru",
-    "English": "en"
+    "Serbian (Српски)": "sr",
+    "Slovak (Slovenčina)": "sk",
+    "Slovenian (Slovenščina)": "sl",
+    "Ukrainian (Українська)": "uk",
+    
+    # Middle Eastern & Central Asian
+    "Arabic (العربية)": "ar",
+    "Armenian (Հայերեն)": "hy",
+    "Azerbaijani (Azərbaycan)": "az",
+    "Hebrew (עברית)": "he",
+    "Kazakh (Қазақ)": "kk",
+    "Pashto (پښتو)": "ps",
+    "Persian (فارسی)": "fa",
+    "Tajik (Тоҷикӣ)": "tg",
+    "Turkish (Türkçe)": "tr",
+    "Uzbek (Oʻzbek)": "uz",
+    "Yiddish (ייִדיש)": "yi",
+    
+    # South Asian
+    "Bengali (বাংলা)": "bn",
+    "Gujarati (ગુજરાતી)": "gu",
+    "Hindi (हिन्दी)": "hi",
+    "Kannada (ಕನ್ನಡ)": "kn",
+    "Malayalam (മലയാളം)": "ml",
+    "Marathi (मराठी)": "mr",
+    "Nepali (नेपाली)": "ne",
+    "Punjabi (ਪੰਜਾਬੀ)": "pa",
+    "Sindhi (سنڌي)": "sd",
+    "Sinhala (සිංহල)": "si",
+    "Tamil (தமிழ்)": "ta",
+    "Telugu (తెలుగు)": "te",
+    "Urdu (اردو)": "ur",
+    
+    # East & Southeast Asian
+    "Burmese (မြန်မာ)": "my",
+    "Chinese Simplified (简体中文)": "zh-cn",
+    "Indonesian (Bahasa Indonesia)": "id",
+    "Japanese (日本語)": "ja",
+    "Javanese (Jawa)": "jw",
+    "Khmer (ខ្មែរ)": "km",
+    "Korean (한국어)": "ko",
+    "Lao (ລາວ)": "lo",
+    "Malay (Bahasa Melayu)": "ms",
+    "Mongolian (Монгол)": "mn",
+    "Sundanese (Sunda)": "su",
+    "Tagalog (Filipino)": "tl",
+    "Thai (ไทย)": "th",
+    "Vietnamese (Tiếng Việt)": "vi",
+    
+    # African
+    "Amharic (አማርኛ)": "am",
+    "Hausa": "ha",
+    "Malagasy": "mg",
+    "Shona (Chishona)": "sn",
+    "Somali (Soomaali)": "so",
+    "Swahili (Kiswahili)": "sw",
+    "Yoruba (Yorùbá)": "yo",
+    
+    # Nordic
+    "Danish (Dansk)": "da",
+    "Finnish (Suomi)": "fi",
+    "Norwegian (Norsk)": "no",
+    "Swedish (Svenska)": "sv",
+    
+    # Other / Regional
+    "Georgian (ქართული)": "ka",
+    "Haitian Creole (Kreyòl)": "ht",
+    "Hawaiian (ʻŌlelo Hawaiʻi)": "haw",
+    "Maltese (Malti)": "mt",
+    "Maori (Māori)": "mi"
 }
 
 # Hero Title and Subtitle Header
@@ -434,7 +529,7 @@ if st.session_state.video_id:
         target_lang_name = st.selectbox(
             "Select Target Language for Subtitles:",
             options=list(LANGUAGES.keys()),
-            index=list(LANGUAGES.keys()).index("English")
+            index=list(LANGUAGES.keys()).index("English (Global)")
         )
         target_lang_code = LANGUAGES[target_lang_name]
         
