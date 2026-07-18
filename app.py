@@ -523,6 +523,12 @@ if "is_processing" not in st.session_state:
 
 # Reset handler helper
 def start_over():
+    try:
+        if "uploaded_filepath" in st.session_state and st.session_state.uploaded_filepath:
+            if os.path.exists(st.session_state.uploaded_filepath):
+                os.remove(st.session_state.uploaded_filepath)
+    except Exception:
+        pass
     st.session_state.step = "upload"
     st.session_state.video_id = None
     st.session_state.uploaded_filename = None
@@ -668,11 +674,7 @@ def show_configure_dialog():
                         st.session_state.is_processing = False
                         st.rerun()
                 finally:
-                    try:
-                        if os.path.exists(st.session_state.uploaded_filepath):
-                            os.remove(st.session_state.uploaded_filepath)
-                    except Exception:
-                        pass
+                    pass
             else:
                 st.error("Local engine is not available for standalone processing.")
                 if st.button("Close"):
@@ -843,9 +845,17 @@ def show_download_dialog():
         
     st.divider()
     
-    # Button to start over and reset state machine
-    if st.button("Upload Another Video"):
-        start_over()
+    # Buttons for going back or resetting state
+    col_back, col_reset = st.columns(2)
+    with col_back:
+        if st.button("Edit Styling Options"):
+            st.session_state.final_video_bytes = None
+            st.session_state.step = "configure"
+            st.rerun()
+            
+    with col_reset:
+        if st.button("Upload Another Video"):
+            start_over()
 
 
 # =========================================================================
