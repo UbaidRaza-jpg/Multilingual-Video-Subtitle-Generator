@@ -310,13 +310,24 @@ def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, f
     return True
 
 
-def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF") -> bool:
+def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", resolution_cap: str = "original") -> bool:
     """
-    Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment, size, and color.
+    Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment, size, color, and resolution cap.
     """
-    print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}, size={font_size}, color={font_color}...")
+    print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}, size={font_size}, color={font_color}, resolution_cap={resolution_cap}...")
+    
+    # Build filter graph (scaling first, then drawing subtitles)
+    filters = []
+    if resolution_cap == "720p":
+        filters.append("scale=-2:'min(ih,720)'")
+    elif resolution_cap == "480p":
+        filters.append("scale=-2:'min(ih,480)'")
+        
     subtitles_filter = get_ffmpeg_subtitles_filter_path(srt_path)
     subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color}'"
+    filters.append(subtitles_filter)
+    
+    filter_graph = ",".join(filters)
     ffmpeg_exe = get_ffmpeg_executable()
     
     # Try with audio copy first for speed/quality retention
@@ -324,7 +335,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
         ffmpeg_exe,
         "-y",
         "-i", video_path,
-        "-vf", subtitles_filter,
+        "-vf", filter_graph,
         "-c:a", "copy",
         output_path
     ]
@@ -338,7 +349,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
             ffmpeg_exe,
             "-y",
             "-i", video_path,
-            "-vf", subtitles_filter,
+            "-vf", filter_graph,
             "-c:a", "aac",
             output_path
         ]
@@ -352,7 +363,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     return True
 
 
-def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small") -> str:
+def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small", resolution_cap: str = "original") -> str:
     """
     Process the input video by transcribing it, translating the transcript,
     and hardcoding the translated subtitles.
@@ -363,11 +374,13 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
         alignment (int): The subtitle position alignment code.
         font_size (int): The subtitle font size.
         font_color (str): The subtitle font color (ASS hex format).
+        model_size (str): The Whisper model size.
+        resolution_cap (str): The video export resolution cap.
 
     Returns:
         str: The path to the final output video file, or empty string on failure.
     """
-    print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment}, size: {font_size}, color: {font_color})")
+    print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment}, size: {font_size}, color: {font_color}, resolution_cap: {resolution_cap})")
     
     if not os.path.exists(input_path):
         print(f"Error: Input file {input_path} does not exist.")
@@ -393,8 +406,8 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
         if not translate_success:
             raise Exception("Translation failed.")
             
-        # Step-3: Burn subtitles with selected styles
-        burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path, alignment, font_size, font_color)
+        # Step-3: Burn subtitles with selected styles and resolution cap
+        burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path, alignment, font_size, font_color, resolution_cap=resolution_cap)
         if not burn_success:
             raise Exception("Subtitle burning failed.")
             

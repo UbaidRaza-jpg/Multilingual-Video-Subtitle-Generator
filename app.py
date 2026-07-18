@@ -525,12 +525,12 @@ if st.session_state.video_id:
             st.warning(f"Error loading preview frame: {e}")
             
     st.divider()
-    st.markdown('<div class="custom-card-header">Select Language & Accuracy</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-card-header">Select Language, Accuracy & Resolution</div>', unsafe_allow_html=True)
     
-    col_lang, col_acc = st.columns(2)
+    col_lang, col_acc, col_res = st.columns(3)
     with col_lang:
         target_lang_name = st.selectbox(
-            "Select Target Language for Subtitles:",
+            "Select Target Language:",
             options=list(LANGUAGES.keys()),
             index=list(LANGUAGES.keys()).index("English (Global)")
         )
@@ -542,11 +542,24 @@ if st.session_state.video_id:
             "Fast / Standard Accuracy": "base"
         }
         accuracy_name = st.selectbox(
-            "Select Transcription Accuracy:",
+            "Select Accuracy:",
             options=list(ACCURACY_MODELS.keys()),
             index=0
         )
         model_size_code = ACCURACY_MODELS[accuracy_name]
+        
+    with col_res:
+        RESOLUTIONS = {
+            "Original Resolution (Fastest)": "original",
+            "Standard HD (720p)": "720p",
+            "Mobile Optimized (480p)": "480p"
+        }
+        res_name = st.selectbox(
+            "Select Export Resolution:",
+            options=list(RESOLUTIONS.keys()),
+            index=0
+        )
+        resolution_cap_code = RESOLUTIONS[res_name]
         
     email_input = st.text_input(
         "Email Address for Notifications (Optional):",
@@ -569,7 +582,8 @@ if st.session_state.video_id:
                     "font_size": size_code,
                     "font_color": color_code,
                     "email": email_input.strip() if email_input.strip() != "" else None,
-                    "model_size": model_size_code
+                    "model_size": model_size_code,
+                    "resolution_cap": resolution_cap_code
                 }
                 response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
                 
@@ -676,7 +690,8 @@ if st.session_state.video_id:
                             align_code,
                             size_code,
                             color_code,
-                            model_size=model_size_code
+                            model_size=model_size_code,
+                            resolution_cap=resolution_cap_code
                         )
                         
                         if output_filepath and os.path.exists(output_filepath):
