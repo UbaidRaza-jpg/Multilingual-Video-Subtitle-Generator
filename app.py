@@ -872,12 +872,18 @@ if st.session_state.step == "upload":
 # STEP 2: Customization Modal Dialog
 elif st.session_state.step == "configure":
     st.info("The customization options are open in the dialog popup overlay.")
-    show_configure_dialog()
+    if st.button("Re-open Configuration Dialog"):
+        show_configure_dialog()
+    else:
+        show_configure_dialog()
 
 # STEP 3: Success & Download Screen Modal Dialog
 elif st.session_state.step == "download":
     st.info("The finalized video is ready in the popup download overlay.")
-    show_download_dialog()
+    if st.button("Re-open Download & Share Dialog"):
+        show_download_dialog()
+    else:
+        show_download_dialog()
 
 
 st.divider()
