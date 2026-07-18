@@ -775,8 +775,28 @@ def show_configure_dialog():
             
             col_font, col_size, col_color = st.columns(3)
             with col_font:
-                FONTS = ["Arial", "Impact", "Trebuchet MS", "Courier New", "Times New Roman"]
+                FONTS = [
+                    "Arial", 
+                    "Arial Black", 
+                    "Calibri", 
+                    "Comic Sans MS", 
+                    "Consolas", 
+                    "Courier New", 
+                    "Georgia", 
+                    "Impact", 
+                    "Tahoma", 
+                    "Times New Roman", 
+                    "Trebuchet MS", 
+                    "Verdana"
+                ]
                 font_name = st.selectbox("Font Name:", options=FONTS, index=0)
+                st.markdown(f"""
+                <div style="background-color: #1E222B; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 8px;">
+                    <span style="font-family: '{font_name}', sans-serif; font-size: 1.1rem; color: #E5E7EB; font-weight: 500;">
+                        {font_name} Style Preview
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
                 
             with col_size:
                 SIZES = {
@@ -960,9 +980,29 @@ def show_configure_dialog():
             with st.expander("Adjust styling or alignment settings"):
                 col_font, col_size, col_color = st.columns(3)
                 with col_font:
-                    FONTS = ["Arial", "Impact", "Trebuchet MS", "Courier New", "Times New Roman"]
+                    FONTS = [
+                        "Arial", 
+                        "Arial Black", 
+                        "Calibri", 
+                        "Comic Sans MS", 
+                        "Consolas", 
+                        "Courier New", 
+                        "Georgia", 
+                        "Impact", 
+                        "Tahoma", 
+                        "Times New Roman", 
+                        "Trebuchet MS", 
+                        "Verdana"
+                    ]
                     font_name = st.selectbox("Font Name:", options=FONTS, index=FONTS.index(st.session_state.params["font_name"]))
                     st.session_state.params["font_name"] = font_name
+                    st.markdown(f"""
+                    <div style="background-color: #1E222B; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 8px;">
+                        <span style="font-family: '{font_name}', sans-serif; font-size: 1.1rem; color: #E5E7EB; font-weight: 500;">
+                            {font_name} Style Preview
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
                 with col_size:
                     SIZES = {
