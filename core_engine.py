@@ -315,9 +315,9 @@ def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, f
     
     # Border styling attributes for ASS format
     if border_style == "box":
-        ass_border = "BorderStyle=3,Outline=0,Shadow=0,BackColour=&H80000000"
+        ass_border = "BorderStyle=3,Outline=4,Shadow=0,OutlineColour=&H80000000,BackColour=&H80000000"
     else:
-        ass_border = "BorderStyle=1,Outline=2,Shadow=1,BackColour=&H00000000"
+        ass_border = "BorderStyle=1,Outline=2,Shadow=1,OutlineColour=&H00000000,BackColour=&H00000000"
         
     # Append styling overrides to force_style
     subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color},FontName={font_name},{ass_border}'"
@@ -368,9 +368,9 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     
     # Border styling attributes for ASS format
     if border_style == "box":
-        ass_border = "BorderStyle=3,Outline=0,Shadow=0,BackColour=&H80000000"
+        ass_border = "BorderStyle=3,Outline=4,Shadow=0,OutlineColour=&H80000000,BackColour=&H80000000"
     else:
-        ass_border = "BorderStyle=1,Outline=2,Shadow=1,BackColour=&H00000000"
+        ass_border = "BorderStyle=1,Outline=2,Shadow=1,OutlineColour=&H00000000,BackColour=&H00000000"
         
     subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color},FontName={font_name},{ass_border}'"
     filters.append(subtitles_filter)
