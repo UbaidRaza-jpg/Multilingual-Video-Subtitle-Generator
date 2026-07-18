@@ -136,7 +136,7 @@ def send_email_notification(to_email: str, task_id: str, status: str, filename: 
         print(f"Error sending notification email to {to_email}: {e}")
 
 
-def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int, font_size: int, font_color: str, email: str = None, model_size: str = "small", resolution_cap: str = "original", segmentation_mode: str = "line_by_line"):
+def async_process_video_task(task_id: str, input_path: str, target_language: str, alignment: int, font_size: int, font_color: str, email: str = None, model_size: str = "small", resolution_cap: str = "original", segmentation_mode: str = "line_by_line", font_name: str = "Arial", border_style: str = "outline", srt_path: str = None):
     """
     Background worker that invokes the core video processing engine
     and updates the status database upon completion or failure.
@@ -146,7 +146,7 @@ def async_process_video_task(task_id: str, input_path: str, target_language: str
         tasks_db[task_id]["status"] = "processing"
         
         # Run core processing with specified alignment position, font size, color, resolution cap, and segmentation mode
-        output_path = process_video(input_path, target_language, alignment, font_size, font_color, model_size=model_size, resolution_cap=resolution_cap, segmentation_mode=segmentation_mode)
+        output_path = process_video(input_path, target_language, alignment, font_size, font_color, model_size=model_size, resolution_cap=resolution_cap, segmentation_mode=segmentation_mode, font_name=font_name, border_style=border_style, srt_path=srt_path)
         
         if output_path and os.path.exists(output_path):
             tasks_db[task_id]["status"] = "completed"
@@ -255,7 +255,7 @@ async def upload_video(file: UploadFile = File(...)):
 
 
 @app.get("/preview/{video_id}")
-async def get_video_preview(video_id: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF"):
+async def get_video_preview(video_id: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", font_name: str = "Arial", border_style: str = "outline"):
     """
     Step 2: Generate and return a single JPEG frame at the 1-second mark 
     with a sample subtitle burned at the chosen styling parameters.
@@ -271,7 +271,7 @@ async def get_video_preview(video_id: str, alignment: int = 2, font_size: int = 
     preview_filename = f"preview_{video_id}_{alignment}_{font_size}_{font_color.replace('&', '').replace('#', '')}.jpg"
     preview_filepath = os.path.join(OUTPUT_DIR, preview_filename)
     
-    success = generate_subtitle_preview(task["filepath"], alignment, font_size, font_color, preview_filepath)
+    success = generate_subtitle_preview(task["filepath"], alignment, font_size, font_color, preview_filepath, font_name=font_name, border_style=border_style)
     if not success or not os.path.exists(preview_filepath):
         raise HTTPException(status_code=500, detail="Failed to extract and burn preview frame.")
         
@@ -289,7 +289,10 @@ async def process_video_endpoint(
     email: str = Form(None),
     model_size: str = Form("small"),
     resolution_cap: str = Form("original"),
-    segmentation_mode: str = Form("line_by_line")
+    segmentation_mode: str = Form("line_by_line"),
+    font_name: str = Form("Arial"),
+    border_style: str = Form("outline"),
+    srt_path: str = Form(None)
 ):
     """
     Step 3: Trigger the full background transcription and subtitle burning process.
@@ -320,7 +323,10 @@ async def process_video_endpoint(
         email,
         model_size,
         resolution_cap,
-        segmentation_mode
+        segmentation_mode,
+        font_name,
+        border_style,
+        srt_path
     )
 
     return {
@@ -331,6 +337,43 @@ async def process_video_endpoint(
 
 
 
+
+
+@app.post("/transcribe/{video_id}")
+async def transcribe_only_endpoint(
+    video_id: str,
+    target_language: str = Form(...),
+    model_size: str = Form("small"),
+    segmentation_mode: str = Form("line_by_line"),
+    bilingual: bool = Form(False)
+):
+    """
+    Generate, translate, and return subtitle blocks without burning them.
+    """
+    if video_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Video not found")
+    task = tasks_db[video_id]
+    
+    filename = os.path.splitext(task["original_filename"])[0]
+    raw_srt = os.path.join(OUTPUT_DIR, f"{filename}_raw_{uuid.uuid4().hex}.srt")
+    translated_srt = os.path.join(OUTPUT_DIR, f"{filename}_trans_{uuid.uuid4().hex}.srt")
+    
+    try:
+        from core_engine import transcribe_video, translate_srt, parse_srt
+        transcribe_video(task["filepath"], raw_srt, model_size=model_size, segmentation_mode=segmentation_mode)
+        translate_srt(raw_srt, translated_srt, target_language, bilingual=bilingual)
+        
+        blocks = parse_srt(translated_srt)
+        
+        # Cleanup
+        if os.path.exists(raw_srt):
+            os.remove(raw_srt)
+        if os.path.exists(translated_srt):
+            os.remove(translated_srt)
+            
+        return {"status": "success", "blocks": blocks}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/status/{task_id}")

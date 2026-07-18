@@ -246,7 +246,6 @@ API_URL = os.environ.get("API_URL", "http://localhost:8000")
 # Check if backend FastAPI server is running
 if "use_api" not in st.session_state:
     try:
-        # Send a quick request to check connectivity
         requests.get(API_URL, timeout=1.0)
         st.session_state.use_api = True
     except Exception:
@@ -254,7 +253,7 @@ if "use_api" not in st.session_state:
 
 # Try importing core engine locally for Standalone Mode fallback
 try:
-    from core_engine import process_video, generate_subtitle_preview
+    from core_engine import process_video, generate_subtitle_preview, transcribe_video, translate_srt, parse_srt, write_srt
     LOCAL_ENGINE_AVAILABLE = True
 except ImportError:
     LOCAL_ENGINE_AVAILABLE = False
@@ -295,7 +294,6 @@ def render_orbit_loader(title: str, subtitle: str):
 
 # Standalone SMTP notifier helper
 def send_standalone_email(to_email: str, status: str, original_filename: str, error_reason: str = None):
-    # Try to load secrets from Streamlit Cloud Secrets, fallback to os.environ
     host = st.secrets.get("SMTP_HOST") or os.environ.get("SMTP_HOST")
     port = st.secrets.get("SMTP_PORT") or os.environ.get("SMTP_PORT")
     username = st.secrets.get("SMTP_USERNAME") or os.environ.get("SMTP_USERNAME")
@@ -349,13 +347,13 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
         else:
             html = f"""
             <html>
-            <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 30px; color: #333; background-color: #f9f9f9;">
-                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;">
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #374151; background-color: #F3F4F6; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #E5E7EB;">
                     <h2 style="color: #EF4444; border-bottom: 2px solid #E5E7EB; padding-bottom: 12px; margin-top: 0;">Subtitle Generation Failed</h2>
-                    <p style="font-size: 15px; line-height: 1.6;">Unfortunately, processing your video <strong>{original_filename}</strong> ran into an error.</p>
+                    <p style="font-size: 15px; line-height: 1.6; color: #374151;">Unfortunately, processing your video <strong>{original_filename}</strong> ran into an error.</p>
                     <p style="font-size: 15px; line-height: 1.6;"><strong>Error Reason:</strong></p>
-                    <blockquote style="background: #f9f9f9; border-left: 4px solid #EF4444; margin: 1.5em 0; padding: 12px 16px; border-radius: 0 8px 8px 0;">
-                        <code style="font-family: monospace; color: #374151;">{error_reason}</code>
+                    <blockquote style="background: #F9FAFB; border-left: 4px solid #EF4444; margin: 1.5em 0; padding: 12px 16px; border-radius: 0 8px 8px 0;">
+                        <code style="font-family: monospace; color: #EF4444;">{error_reason}</code>
                     </blockquote>
                     <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;" />
                     <p style="font-size: 12px; color: #9CA3AF; text-align: center;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
@@ -430,7 +428,7 @@ LANGUAGES = {
     "Tajik (Тоҷикӣ)": "tg",
     "Turkish (Türkçe)": "tr",
     "Uzbek (Oʻzbek)": "uz",
-    "Yiddish (ייִדיש)": "yi",
+    "Yiddish (ייִديש)": "yi",
     
     # South Asian
     "Bengali (বাংলা)": "bn",
@@ -440,7 +438,7 @@ LANGUAGES = {
     "Malayalam (മലയാളം)": "ml",
     "Marathi (मраठी)": "mr",
     "Nepali (नेपाली)": "ne",
-    "Punjabi (ਪੰਜਾਬੀ)": "pa",
+    "Punjabi (ਪੰਜਾਬী)": "pa",
     "Sindhi (سنڌي)": "sd",
     "Sinhala (සිංহල)": "si",
     "Tamil (தமிழ்)": "ta",
@@ -453,7 +451,7 @@ LANGUAGES = {
     "Indonesian (Bahasa Indonesia)": "id",
     "Japanese (日本語)": "ja",
     "Javanese (Jawa)": "jw",
-    "Khmer (ខ្មែរ)": "km",
+    "Khmer (ខ្မэр)": "km",
     "Korean (한국어)": "ko",
     "Lao (лау)": "lo",
     "Malay (Bahasa Melayu)": "ms",
@@ -479,7 +477,7 @@ LANGUAGES = {
     "Swedish (Svenska)": "sv",
     
     # Other / Regional
-    "Georgian (ქართული)": "ka",
+    "Georgia (ქართული)": "ka",
     "Haitian Creole (Kreyòl)": "ht",
     "Hawaiian (ʻŌlelo Hawaiʻi)": "haw",
     "Maltese (Malti)": "mt",
@@ -513,12 +511,18 @@ if "uploaded_filepath" not in st.session_state:
     st.session_state.uploaded_filepath = None
 if "final_video_bytes" not in st.session_state:
     st.session_state.final_video_bytes = None
+if "final_srt_bytes" not in st.session_state:
+    st.session_state.final_srt_bytes = None
 if "processing_error" not in st.session_state:
     st.session_state.processing_error = None
 if "params" not in st.session_state:
     st.session_state.params = {}
 if "is_processing" not in st.session_state:
     st.session_state.is_processing = False
+if "is_preparing" not in st.session_state:
+    st.session_state.is_preparing = False
+if "srt_blocks" not in st.session_state:
+    st.session_state.srt_blocks = None
 
 
 # Reset handler helper
@@ -534,24 +538,120 @@ def start_over():
     st.session_state.uploaded_filename = None
     st.session_state.uploaded_filepath = None
     st.session_state.final_video_bytes = None
+    st.session_state.final_srt_bytes = None
     st.session_state.processing_error = None
     st.session_state.params = {}
     st.session_state.is_processing = False
+    st.session_state.is_preparing = False
+    st.session_state.srt_blocks = None
     st.rerun()
 
 
 # Modal Configuration Dialog
 @st.dialog("Configure Subtitles", width="large")
 def show_configure_dialog():
-    if st.session_state.is_processing:
-        # Hover loader directly inside the dialog while keeping the dims active
-        render_orbit_loader("Processing Subtitles", "AI is transcribing and translating your video inside the background queue...")
+    if st.session_state.is_preparing:
+        # Hover loader for transcription & translation step
+        render_orbit_loader("Preparing Subtitles", "AI is transcribing and translating your video speech to compile subtitle text...")
         
-        # Execute processing logic inside the configure dialog popup!
-        status_holder = st.empty()
-        
+        # Execute transcription/translation to get raw blocks
         if st.session_state.use_api:
-            # API Mode processing
+            try:
+                payload = {
+                    "target_language": st.session_state.params["target_lang_code"],
+                    "model_size": st.session_state.params["model_size_code"],
+                    "segmentation_mode": st.session_state.params["segmentation_mode_code"],
+                    "bilingual": st.session_state.params["bilingual"]
+                }
+                response = requests.post(f"{API_URL}/transcribe/{st.session_state.video_id}", data=payload)
+                if response.status_code == 200:
+                    res_data = response.json()
+                    st.session_state.srt_blocks = res_data["blocks"]
+                    
+                    # Compile default SRT bytes
+                    srt_content = ""
+                    for block in st.session_state.srt_blocks:
+                        srt_content += f"{block['index']}\n{block['timestamp']}\n{block['text']}\n\n"
+                    st.session_state.final_srt_bytes = srt_content.encode("utf-8")
+                    
+                    st.session_state.is_preparing = False
+                    st.rerun()
+                else:
+                    st.error(f"Failed to prepare subtitles: {response.text}")
+                    if st.button("Close"):
+                        st.session_state.is_preparing = False
+                        st.rerun()
+            except Exception as e:
+                st.error(f"Error: {e}")
+                if st.button("Close"):
+                    st.session_state.is_preparing = False
+                    st.rerun()
+        else:
+            # Standalone Local transcription/translation
+            if LOCAL_ENGINE_AVAILABLE:
+                try:
+                    filename = os.path.splitext(st.session_state.uploaded_filename)[0]
+                    raw_srt_path = os.path.join("temp_outputs", f"{filename}_raw_{uuid.uuid4().hex}.srt")
+                    trans_srt_path = os.path.join("temp_outputs", f"{filename}_trans_{uuid.uuid4().hex}.srt")
+                    
+                    transcribe_video(
+                        st.session_state.uploaded_filepath, 
+                        raw_srt_path, 
+                        model_size=st.session_state.params["model_size_code"], 
+                        segmentation_mode=st.session_state.params["segmentation_mode_code"]
+                    )
+                    translate_srt(
+                        raw_srt_path, 
+                        trans_srt_path, 
+                        st.session_state.params["target_lang_code"], 
+                        bilingual=st.session_state.params["bilingual"]
+                    )
+                    
+                    st.session_state.srt_blocks = parse_srt(trans_srt_path)
+                    
+                    # Read final SRT bytes
+                    with open(trans_srt_path, "r", encoding="utf-8") as f:
+                        st.session_state.final_srt_bytes = f.read().encode("utf-8")
+                        
+                    # Cleanup
+                    for srt_f in [raw_srt_path, trans_srt_path]:
+                        if os.path.exists(srt_f):
+                            os.remove(srt_f)
+                            
+                    st.session_state.is_preparing = False
+                    st.rerun()
+                except Exception as err:
+                    st.error(f"Local subtitle preparation failed: {err}")
+                    if st.button("Close"):
+                        st.session_state.is_preparing = False
+                        st.rerun()
+            else:
+                st.error("Local engine is not available.")
+                if st.button("Close"):
+                    st.session_state.is_preparing = False
+                    st.rerun()
+                    
+    elif st.session_state.is_processing:
+        # Hover loader for video hardcoding step
+        render_orbit_loader("Generating Subtitled Video", "Burning styling and edited subtitle blocks into the final video file...")
+        
+        # Save edited blocks back to a temp file
+        filename = os.path.splitext(st.session_state.uploaded_filename)[0]
+        edited_srt_path = os.path.join("temp_outputs", f"{filename}_edited_{uuid.uuid4().hex}.srt")
+        
+        # Re-compile final SRT bytes from editor
+        srt_content = ""
+        for block in st.session_state.srt_blocks:
+            srt_content += f"{block['index']}\n{block['timestamp']}\n{block['text']}\n\n"
+        st.session_state.final_srt_bytes = srt_content.encode("utf-8")
+        
+        # Write to local file
+        os.makedirs("temp_outputs", exist_ok=True)
+        with open(edited_srt_path, "w", encoding="utf-8") as f:
+            f.write(srt_content)
+            
+        if st.session_state.use_api:
+            # API Mode hardcoding
             try:
                 payload = {
                     "target_language": st.session_state.params["target_lang_code"],
@@ -561,17 +661,14 @@ def show_configure_dialog():
                     "model_size": st.session_state.params["model_size_code"],
                     "resolution_cap": st.session_state.params["resolution_cap_code"],
                     "segmentation_mode": st.session_state.params["segmentation_mode_code"],
+                    "font_name": st.session_state.params["font_name"],
+                    "border_style": st.session_state.params["border_style"],
+                    "srt_path": edited_srt_path,
                     "email": st.session_state.params.get("email")
                 }
                 
                 response = requests.post(f"{API_URL}/process/{st.session_state.video_id}", data=payload)
-                
-                if response.status_code != 200:
-                    st.error(f"Failed to trigger process: {response.text}")
-                    if st.button("Retry"):
-                        st.session_state.is_processing = False
-                        st.rerun()
-                else:
+                if response.status_code == 200:
                     task_data = response.json()
                     task_id = task_data["task_id"]
                     
@@ -582,57 +679,41 @@ def show_configure_dialog():
                         try:
                             status_resp = requests.get(f"{API_URL}/status/{task_id}")
                             if status_resp.status_code == 200:
-                                status_data = status_resp.json()
-                                status = status_data["status"]
-                                elapsed = time.time() - start_time
-                                
-                                if status in ["queued", "uploaded"]:
-                                    with status_holder:
-                                        render_orbit_loader("Queued in Queue", f"Waiting for background worker... (elapsed: {elapsed:.1f}s)")
-                                elif status == "processing":
-                                    with status_holder:
-                                        render_orbit_loader("AI Processing", f"Transcribing audio & translating speech... (elapsed: {elapsed:.1f}s)")
-                            else:
-                                with status_holder:
-                                    render_orbit_loader("Status Check", "Retrying server connection...")
+                                status = status_resp.json()["status"]
+                            time.sleep(2.0)
                         except Exception:
-                            with status_holder:
-                                render_orbit_loader("Interrupted", "Re-connecting to backend server...")
-                        time.sleep(2.5)
-                    
+                            pass
+                            
                     if status == "completed":
-                        with status_holder:
-                            render_orbit_loader("Retrieving Video", "Completed successfully! Downloading output file...")
-                        
-                        download_url = f"{API_URL}/download/{task_id}"
-                        video_resp = requests.get(download_url)
+                        video_resp = requests.get(f"{API_URL}/download/{task_id}")
                         if video_resp.status_code == 200:
                             st.session_state.final_video_bytes = video_resp.content
                             st.session_state.is_processing = False
                             st.session_state.step = "download"
                             st.rerun()
-                        else:
-                            st.error("Failed to retrieve final subtitle output.")
-                            if st.button("Close"):
-                                st.session_state.is_processing = False
-                                st.rerun()
-                    elif status == "failed":
-                        try:
-                            status_resp = requests.get(f"{API_URL}/status/{task_id}")
-                            error_reason = status_resp.json().get("error", "Unknown error")
-                        except Exception:
-                            error_reason = "Unknown error"
-                        st.error(f"Subtitle generation failed: {error_reason}")
+                    else:
+                        st.error("Subtitle burning failed on the server.")
                         if st.button("Close"):
                             st.session_state.is_processing = False
                             st.rerun()
+                else:
+                    st.error(f"Failed to start subtitle process: {response.text}")
+                    if st.button("Close"):
+                        st.session_state.is_processing = False
+                        st.rerun()
             except Exception as e:
-                st.error(f"Error occurred: {e}")
+                st.error(f"Error: {e}")
                 if st.button("Close"):
                     st.session_state.is_processing = False
                     st.rerun()
+            finally:
+                if os.path.exists(edited_srt_path):
+                    try:
+                        os.remove(edited_srt_path)
+                    except Exception:
+                        pass
         else:
-            # Standalone Local Processing inside Popup
+            # Standalone mode hardcoding
             if LOCAL_ENGINE_AVAILABLE:
                 try:
                     output_filepath = process_video(
@@ -643,14 +724,16 @@ def show_configure_dialog():
                         st.session_state.params["color_code"],
                         model_size=st.session_state.params["model_size_code"],
                         resolution_cap=st.session_state.params["resolution_cap_code"],
-                        segmentation_mode=st.session_state.params["segmentation_mode_code"]
+                        segmentation_mode=st.session_state.params["segmentation_mode_code"],
+                        font_name=st.session_state.params["font_name"],
+                        border_style=st.session_state.params["border_style"],
+                        srt_path=edited_srt_path
                     )
                     
                     if output_filepath and os.path.exists(output_filepath):
                         with open(output_filepath, "rb") as f:
                             st.session_state.final_video_bytes = f.read()
                             
-                        # Send email if SMTP is configured
                         if st.session_state.params.get("email"):
                             send_standalone_email(
                                 st.session_state.params["email"],
@@ -667,181 +750,329 @@ def show_configure_dialog():
                         st.session_state.step = "download"
                         st.rerun()
                     else:
-                        raise Exception("Local process engine failed to export file.")
+                        raise Exception("Local process engine failed to burn subtitles.")
                 except Exception as err:
                     st.error(f"Subtitle processing failed: {err}")
                     if st.button("Close"):
                         st.session_state.is_processing = False
                         st.rerun()
                 finally:
-                    pass
+                    if os.path.exists(edited_srt_path):
+                        try:
+                            os.remove(edited_srt_path)
+                        except Exception:
+                            pass
             else:
-                st.error("Local engine is not available for standalone processing.")
+                st.error("Local engine is not available.")
                 if st.button("Close"):
                     st.session_state.is_processing = False
                     st.rerun()
+                    
     else:
-        # Standard configuration dialog view
-        st.markdown('<div class="custom-card-header">Select Styling, Language & Accuracy</div>', unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            ALIGNMENTS = {
-                "Bottom (Center)": 2,
-                "Top (Center)": 8,
-                "Middle (Center)": 5,
-                "Bottom Left": 1,
-                "Bottom Right": 3,
-                "Top Left": 7,
-                "Top Right": 9
-            }
-            align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=0)
-            align_code = ALIGNMENTS[align_name]
+        # Standard configuration layout
+        if st.session_state.srt_blocks is None:
+            st.markdown('<div class="custom-card-header">Select Styling, Language & Accuracy</div>', unsafe_allow_html=True)
             
-        with col2:
-            SIZES = {
-                "Small (16px)": 16,
-                "Medium (20px)": 20,
-                "Large (24px)": 24,
-                "Extra Large (32px)": 32
-            }
-            size_name = st.selectbox("Font Size:", options=list(SIZES.keys()), index=1)
-            size_code = SIZES[size_name]
-            
-        with col3:
-            COLORS = {
-                "White": "&H00FFFFFF",
-                "Yellow": "&H0000FFFF",
-                "Cyan": "&H00FFFF00",
-                "Red": "&H000000FF",
-                "Green": "&H0000FF00",
-                "Blue": "&H00FF0000",
-                "Custom Color Picker...": "custom"
-            }
-            color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
-            if COLORS[color_name] == "custom":
-                chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
-                color_code = hex_to_ass_color(chosen_hex)
-            else:
-                color_code = COLORS[color_name]
-            
-        col_lang, col_acc, col_res, col_seg = st.columns(4)
-        with col_lang:
-            target_lang_name = st.selectbox(
-                "Target Language:",
-                options=list(LANGUAGES.keys()),
-                index=list(LANGUAGES.keys()).index("English (Global)")
-            )
-            target_lang_code = LANGUAGES[target_lang_name]
-            
-        with col_acc:
-            ACCURACY_MODELS = {
-                "High Accuracy (Recommended)": "small",
-                "Fast / Standard Accuracy": "base"
-            }
-            accuracy_name = st.selectbox("Accuracy:", options=list(ACCURACY_MODELS.keys()), index=0)
-            model_size_code = ACCURACY_MODELS[accuracy_name]
-            
-        with col_res:
-            RESOLUTIONS = {
-                "Original Resolution (Fastest)": "original",
-                "Standard HD (720p)": "720p",
-                "Mobile Optimized (480p)": "480p"
-            }
-            res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=0)
-            resolution_cap_code = RESOLUTIONS[res_name]
-            
-        with col_seg:
-            SEGMENTATIONS = {
-                "Line by Line": "line_by_line",
-                "Word by Word": "word_by_word"
-            }
-            seg_name = st.selectbox("Subtitle Style:", options=list(SEGMENTATIONS.keys()), index=0)
-            segmentation_mode = SEGMENTATIONS[seg_name]
-            
-        st.divider()
-        
-        # Email notifier text input (Optional) - placed under options as requested
-        email_input = st.text_input(
-            "Email Address for Notifications (Optional):",
-            placeholder="Enter your email to receive a notification of download when complete.",
-            help="Ensure you configure the SMTP details in your .env file or Streamlit Cloud secrets to enable emails."
-        )
-        
-        st.divider()
-        
-        # Real-time preview frame
-        st.markdown('<div class="custom-card-header">Instant Layout Preview</div>', unsafe_allow_html=True)
-        with st.spinner("Generating subtitle layout preview..."):
-            try:
-                if st.session_state.use_api:
-                    params = {
-                        "alignment": align_code,
-                        "font_size": size_code,
-                        "font_color": color_code
-                    }
-                    preview_resp = requests.get(f"{API_URL}/preview/{st.session_state.video_id}", params=params)
-                    if preview_resp.status_code == 200:
-                        st.image(preview_resp.content, caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
-                    else:
-                        st.warning(f"Could not load preview frame (HTTP {preview_resp.status_code})")
-                else:
-                    if LOCAL_ENGINE_AVAILABLE:
-                        preview_filename = f"preview_{st.session_state.video_id}_{align_code}_{size_code}_{color_code.replace('&', '').replace('#', '')}.jpg"
-                        preview_filepath = os.path.join("temp_outputs", preview_filename)
-                        success = generate_subtitle_preview(
-                            st.session_state.uploaded_filepath,
-                            align_code,
-                            size_code,
-                            color_code,
-                            preview_filepath
-                        )
-                        if success and os.path.exists(preview_filepath):
-                            with open(preview_filepath, "rb") as f:
-                                st.image(f.read(), caption="Subtitle Location Preview (approx. 1s mark)", use_column_width=True)
-                        else:
-                            st.warning("Failed to generate subtitle preview locally.")
-                    else:
-                        st.warning("Local engine is not available for standalone previews.")
-            except Exception as e:
-                st.warning(f"Error loading preview frame: {e}")
+            col_font, col_size, col_color = st.columns(3)
+            with col_font:
+                FONTS = ["Arial", "Impact", "Trebuchet MS", "Courier New", "Times New Roman"]
+                font_name = st.selectbox("Font Name:", options=FONTS, index=0)
                 
-        # Trigger Action Button
-        if st.button("Generate Subtitles"):
-            st.session_state.params = {
-                "target_lang_code": target_lang_code,
-                "align_code": align_code,
-                "size_code": size_code,
-                "color_code": color_code,
-                "model_size_code": model_size_code,
-                "resolution_cap_code": resolution_cap_code,
-                "segmentation_mode_code": segmentation_mode,
-                "email": email_input.strip() if email_input.strip() != "" else None
-            }
-            st.session_state.is_processing = True
-            st.rerun()
+            with col_size:
+                SIZES = {
+                    "Small (16px)": 16,
+                    "Medium (20px)": 20,
+                    "Large (24px)": 24,
+                    "Extra Large (32px)": 32
+                }
+                size_name = st.selectbox("Font Size:", options=list(SIZES.keys()), index=1)
+                size_code = SIZES[size_name]
+                
+            with col_color:
+                COLORS = {
+                    "White": "&H00FFFFFF",
+                    "Yellow": "&H0000FFFF",
+                    "Cyan": "&H00FFFF00",
+                    "Red": "&H000000FF",
+                    "Green": "&H0000FF00",
+                    "Blue": "&H00FF0000",
+                    "Custom Color Picker...": "custom"
+                }
+                color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
+                if COLORS[color_name] == "custom":
+                    chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
+                    color_code = hex_to_ass_color(chosen_hex)
+                else:
+                    color_code = COLORS[color_name]
+                
+            col_align, col_style, col_lang = st.columns(3)
+            with col_align:
+                ALIGNMENTS = {
+                    "Bottom (Center)": 2,
+                    "Top (Center)": 8,
+                    "Middle (Center)": 5,
+                    "Bottom Left": 1,
+                    "Bottom Right": 3,
+                    "Top Left": 7,
+                    "Top Right": 9
+                }
+                align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=0)
+                align_code = ALIGNMENTS[align_name]
+                
+            with col_style:
+                STYLES = {
+                    "Standard Text Outline": "outline",
+                    "Netflix-Style Bounding Box": "box"
+                }
+                style_name = st.selectbox("Subtitle Background Style:", options=list(STYLES.keys()), index=0)
+                border_style = STYLES[style_name]
+                
+            with col_lang:
+                target_lang_name = st.selectbox(
+                    "Target Language:",
+                    options=list(LANGUAGES.keys()),
+                    index=list(LANGUAGES.keys()).index("English (Global)")
+                )
+                target_lang_code = LANGUAGES[target_lang_name]
+                
+            col_acc, col_res, col_seg = st.columns(3)
+            with col_acc:
+                ACCURACY_MODELS = {
+                    "High Accuracy (Recommended)": "small",
+                    "Fast / Standard Accuracy": "base"
+                }
+                accuracy_name = st.selectbox("Accuracy:", options=list(ACCURACY_MODELS.keys()), index=0)
+                model_size_code = ACCURACY_MODELS[accuracy_name]
+                
+            with col_res:
+                RESOLUTIONS = {
+                    "Original Resolution (Fastest)": "original",
+                    "Standard HD (720p)": "720p",
+                    "Mobile Optimized (480p)": "480p"
+                }
+                res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=0)
+                resolution_cap_code = RESOLUTIONS[res_name]
+                
+            with col_seg:
+                SEGMENTATIONS = {
+                    "Line by Line": "line_by_line",
+                    "Word by Word": "word_by_word"
+                }
+                seg_name = st.selectbox("Subtitle Timing Layout:", options=list(SEGMENTATIONS.keys()), index=0)
+                segmentation_mode = SEGMENTATIONS[seg_name]
+                
+            st.divider()
+            
+            bilingual_selected = st.checkbox(
+                "Bilingual Subtitles (Display Original Language + Translation Stacked)",
+                value=False,
+                help="Display both the original voice language and the translated language at the same time."
+            )
+            
+            email_input = st.text_input(
+                "Email Address for Notifications (Optional):",
+                placeholder="Enter your email to receive a notification of download when complete.",
+                help="Configure SMTP details in your environment variables to enable automated notifications."
+            )
+            
+            st.divider()
+            
+            # Preview Frame
+            st.markdown('<div class="custom-card-header">Instant Layout Preview</div>', unsafe_allow_html=True)
+            with st.spinner("Generating styling preview frame..."):
+                try:
+                    if st.session_state.use_api:
+                        params = {
+                            "alignment": align_code,
+                            "font_size": size_code,
+                            "font_color": color_code,
+                            "font_name": font_name,
+                            "border_style": border_style
+                        }
+                        preview_resp = requests.get(f"{API_URL}/preview/{st.session_state.video_id}", params=params)
+                        if preview_resp.status_code == 200:
+                            st.image(preview_resp.content, caption="Approximate layout styling on first frame", use_column_width=True)
+                        else:
+                            st.warning("Preview frame could not be loaded from API.")
+                    else:
+                        if LOCAL_ENGINE_AVAILABLE:
+                            preview_filename = f"preview_{st.session_state.video_id}_{align_code}_{size_code}_{color_code.replace('&','').replace('#','')}_{font_name}_{border_style}.jpg"
+                            preview_filepath = os.path.join("temp_outputs", preview_filename)
+                            success = generate_subtitle_preview(
+                                st.session_state.uploaded_filepath,
+                                align_code,
+                                size_code,
+                                color_code,
+                                preview_filepath,
+                                font_name=font_name,
+                                border_style=border_style
+                            )
+                            if success and os.path.exists(preview_filepath):
+                                with open(preview_filepath, "rb") as f:
+                                    st.image(f.read(), caption="Approximate layout styling on first frame", use_column_width=True)
+                            else:
+                                st.warning("Preview frame could not be generated locally.")
+                except Exception as e:
+                    st.warning(f"Preview rendering skipped: {e}")
+                    
+            if st.button("Prepare Subtitles & Open Editor"):
+                st.session_state.params = {
+                    "target_lang_code": target_lang_code,
+                    "align_code": align_code,
+                    "size_code": size_code,
+                    "color_code": color_code,
+                    "model_size_code": model_size_code,
+                    "resolution_cap_code": resolution_cap_code,
+                    "segmentation_mode_code": segmentation_mode,
+                    "font_name": font_name,
+                    "border_style": border_style,
+                    "bilingual": bilingual_selected,
+                    "email": email_input.strip() if email_input.strip() != "" else None
+                }
+                st.session_state.is_preparing = True
+                st.rerun()
+        else:
+            # Interactive Timeline Text Editor View
+            st.markdown('<div class="custom-card-header">Interactive Subtitle Timeline Editor</div>', unsafe_allow_html=True)
+            st.write("Double-click or edit any subtitle block's text below before generating the final video:")
+            
+            # Editor container
+            editor_container = st.container()
+            with editor_container:
+                for idx, block in enumerate(st.session_state.srt_blocks):
+                    col_idx, col_time, col_field = st.columns([1, 2, 7])
+                    with col_idx:
+                        st.markdown(f"<strong style='color:#A855F7;'>#{block['index']}</strong>", unsafe_allow_html=True)
+                    with col_time:
+                        st.caption(block['timestamp'])
+                    with col_field:
+                        # Display text input field for each block
+                        st.session_state.srt_blocks[idx]["text"] = st.text_input(
+                            label=f"Edit Subtitle Text #{block['index']}",
+                            value=block["text"],
+                            key=f"srt_edit_{block['index']}_{idx}",
+                            label_visibility="collapsed"
+                        )
+            
+            st.divider()
+            
+            # Allow tweaking styling settings inside an expander
+            with st.expander("Adjust styling or alignment settings"):
+                col_font, col_size, col_color = st.columns(3)
+                with col_font:
+                    FONTS = ["Arial", "Impact", "Trebuchet MS", "Courier New", "Times New Roman"]
+                    font_name = st.selectbox("Font Name:", options=FONTS, index=FONTS.index(st.session_state.params["font_name"]))
+                    st.session_state.params["font_name"] = font_name
+                    
+                with col_size:
+                    SIZES = {
+                        "Small (16px)": 16,
+                        "Medium (20px)": 20,
+                        "Large (24px)": 24,
+                        "Extra Large (32px)": 32
+                    }
+                    reverse_sizes = {v: k for k, v in SIZES.items()}
+                    size_name = st.selectbox("Font Size:", options=list(SIZES.keys()), index=list(SIZES.keys()).index(reverse_sizes[st.session_state.params["size_code"]]))
+                    st.session_state.params["size_code"] = SIZES[size_name]
+                    
+                with col_color:
+                    COLORS = {
+                        "White": "&H00FFFFFF",
+                        "Yellow": "&H0000FFFF",
+                        "Cyan": "&H00FFFF00",
+                        "Red": "&H000000FF",
+                        "Green": "&H0000FF00",
+                        "Blue": "&H00FF0000",
+                        "Custom Color Picker...": "custom"
+                    }
+                    color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
+                    if COLORS[color_name] == "custom":
+                        chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
+                        color_code = hex_to_ass_color(chosen_hex)
+                    else:
+                        color_code = COLORS[color_name]
+                    st.session_state.params["color_code"] = color_code
+                    
+                col_align, col_style, col_res = st.columns(3)
+                with col_align:
+                    ALIGNMENTS = {
+                        "Bottom (Center)": 2,
+                        "Top (Center)": 8,
+                        "Middle (Center)": 5,
+                        "Bottom Left": 1,
+                        "Bottom Right": 3,
+                        "Top Left": 7,
+                        "Top Right": 9
+                    }
+                    reverse_align = {v: k for k, v in ALIGNMENTS.items()}
+                    align_name = st.selectbox("Position:", options=list(ALIGNMENTS.keys()), index=list(ALIGNMENTS.keys()).index(reverse_align[st.session_state.params["align_code"]]))
+                    st.session_state.params["align_code"] = ALIGNMENTS[align_name]
+                    
+                with col_style:
+                    STYLES = {
+                        "Standard Text Outline": "outline",
+                        "Netflix-Style Bounding Box": "box"
+                    }
+                    reverse_styles = {v: k for k, v in STYLES.items()}
+                    style_name = st.selectbox("Subtitle Background Style:", options=list(STYLES.keys()), index=list(STYLES.keys()).index(reverse_styles[st.session_state.params["border_style"]]))
+                    st.session_state.params["border_style"] = STYLES[style_name]
+                    
+                with col_res:
+                    RESOLUTIONS = {
+                        "Original Resolution (Fastest)": "original",
+                        "Standard HD (720p)": "720p",
+                        "Mobile Optimized (480p)": "480p"
+                    }
+                    reverse_res = {v: k for k, v in RESOLUTIONS.items()}
+                    res_name = st.selectbox("Export Resolution:", options=list(RESOLUTIONS.keys()), index=list(RESOLUTIONS.keys()).index(reverse_res[st.session_state.params["resolution_cap_code"]]))
+                    st.session_state.params["resolution_cap_code"] = RESOLUTIONS[res_name]
+                    
+            st.divider()
+            
+            # Action Buttons
+            col_back, col_go = st.columns(2)
+            with col_back:
+                if st.button("Reset & Start Over"):
+                    st.session_state.srt_blocks = None
+                    st.rerun()
+            with col_go:
+                if st.button("Generate Subtitled Video"):
+                    st.session_state.is_processing = True
+                    st.rerun()
 
 
 # Modal Download and share Dialog
 @st.dialog("Download & Share Subtitled Video", width="large")
 def show_download_dialog():
-    st.markdown('<div class="custom-card-header">Your Video is Ready!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="custom-card-header">Your Output is Ready!</div>', unsafe_allow_html=True)
     
     # Subtitled video player
     if st.session_state.final_video_bytes:
         st.video(st.session_state.final_video_bytes)
         
-        # Download button
-        output_filename = f"{os.path.splitext(st.session_state.uploaded_filename)[0]}_subtitled.mp4"
-        st.download_button(
-            label="Download Subtitled Video",
-            data=st.session_state.final_video_bytes,
-            file_name=output_filename,
-            mime="video/mp4"
-        )
+        # Download buttons row
+        col_dl_video, col_dl_srt = st.columns(2)
+        
+        with col_dl_video:
+            output_filename = f"{os.path.splitext(st.session_state.uploaded_filename)[0]}_subtitled.mp4"
+            st.download_button(
+                label="Download Subtitled Video",
+                data=st.session_state.final_video_bytes,
+                file_name=output_filename,
+                mime="video/mp4"
+            )
+            
+        with col_dl_srt:
+            if st.session_state.final_srt_bytes:
+                srt_output_filename = f"{os.path.splitext(st.session_state.uploaded_filename)[0]}_subtitles.srt"
+                st.download_button(
+                    label="Download Subtitles (.SRT)",
+                    data=st.session_state.final_srt_bytes,
+                    file_name=srt_output_filename,
+                    mime="text/plain"
+                )
     else:
-        st.error("No completed video file found in session memory.")
+        st.error("No completed file found in session memory.")
         
     st.divider()
     

@@ -186,12 +186,12 @@ def translate_texts_google_official(texts: List[str], target_lang: str, api_key:
     return [t["translatedText"] for t in result["data"]["translations"]]
 
 
-def translate_srt(input_srt_path: str, output_srt_path: str, target_lang: str) -> bool:
+def translate_srt(input_srt_path: str, output_srt_path: str, target_lang: str, bilingual: bool = False) -> bool:
     """
     Translate an SRT file's text to target_lang using official DeepL / Google APIs
     if configured, otherwise fall back to the free web googletrans scraper.
     """
-    print(f"Translating {input_srt_path} to '{target_lang}'...")
+    print(f"Translating {input_srt_path} to '{target_lang}' (bilingual: {bilingual})...")
     blocks = parse_srt(input_srt_path)
     if not blocks:
         print("No subtitles found to translate.")
@@ -227,7 +227,7 @@ def translate_srt(input_srt_path: str, output_srt_path: str, target_lang: str) -
         except Exception as e:
             print(f"Google Cloud Official API translation failed: {e}. Falling back...")
             translated_texts = []  # reset and fallback
-
+ 
     # Attempt 3: Free googletrans fallback
     if not translated_texts:
         print("Using free googletrans scraper (default)...")
@@ -258,12 +258,20 @@ def translate_srt(input_srt_path: str, output_srt_path: str, target_lang: str) -
     translated_blocks = []
     for idx, block in enumerate(blocks):
         translated_text = translated_texts[idx] if idx < len(translated_texts) else block["text"]
-        translated_blocks.append({
-            "index": block["index"],
-            "timestamp": block["timestamp"],
-            "text": translated_text
-        })
-        
+        if bilingual:
+            combined_text = f"{block['text'].strip()}\n{translated_text.strip()}"
+            translated_blocks.append({
+                "index": block["index"],
+                "timestamp": block["timestamp"],
+                "text": combined_text
+            })
+        else:
+            translated_blocks.append({
+                "index": block["index"],
+                "timestamp": block["timestamp"],
+                "text": translated_text
+            })
+            
     write_srt(translated_blocks, output_srt_path)
     print(f"Saved translated subtitles to {output_srt_path}")
     return True
@@ -289,12 +297,12 @@ def get_ffmpeg_executable() -> str:
     return "ffmpeg"
 
 
-def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, font_color: str, output_image_path: str) -> bool:
+def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, font_color: str, output_image_path: str, font_name: str = "Arial", border_style: str = "outline") -> bool:
     """
     Extracts a single frame from video_path at the 1-second mark and burns a 
-    sample subtitle onto it at the specified alignment, size, and color.
+    sample subtitle onto it at the specified alignment, size, color, font, and border style.
     """
-    print(f"Generating preview for {video_path} with alignment={alignment}, size={font_size}, color={font_color}...")
+    print(f"Generating preview for {video_path} with alignment={alignment}, size={font_size}, color={font_color}, font={font_name}, border_style={border_style}...")
     
     # Ensure temp directories exist
     os.makedirs("temp_outputs", exist_ok=True)
@@ -304,8 +312,15 @@ def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, f
         f.write("1\n00:00:00,000 --> 00:00:05,000\n[Sample Subtitle Location Preview]\n\n")
         
     subtitles_filter = get_ffmpeg_subtitles_filter_path(dummy_srt)
-    # Append alignment, font size, and color force_style
-    subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color}'"
+    
+    # Border styling attributes for ASS format
+    if border_style == "box":
+        ass_border = "BorderStyle=3,Outline=0,Shadow=0,BackColour=&H80000000"
+    else:
+        ass_border = "BorderStyle=1,Outline=2,Shadow=1,BackColour=&H00000000"
+        
+    # Append styling overrides to force_style
+    subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color},FontName={font_name},{ass_border}'"
     
     ffmpeg_exe = get_ffmpeg_executable()
     
@@ -336,11 +351,11 @@ def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, f
     return True
 
 
-def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", resolution_cap: str = "original") -> bool:
+def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", resolution_cap: str = "original", font_name: str = "Arial", border_style: str = "outline") -> bool:
     """
-    Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment, size, color, and resolution cap.
+    Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment, size, color, resolution, font, and border style.
     """
-    print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}, size={font_size}, color={font_color}, resolution_cap={resolution_cap}...")
+    print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}, size={font_size}, color={font_color}, resolution_cap={resolution_cap}, font={font_name}, border_style={border_style}...")
     
     # Build filter graph (scaling first, then drawing subtitles)
     filters = []
@@ -350,7 +365,14 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
         filters.append("scale=-2:'min(ih,480)'")
         
     subtitles_filter = get_ffmpeg_subtitles_filter_path(srt_path)
-    subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color}'"
+    
+    # Border styling attributes for ASS format
+    if border_style == "box":
+        ass_border = "BorderStyle=3,Outline=0,Shadow=0,BackColour=&H80000000"
+    else:
+        ass_border = "BorderStyle=1,Outline=2,Shadow=1,BackColour=&H00000000"
+        
+    subtitles_filter += f":force_style='Alignment={alignment},FontSize={font_size},PrimaryColour={font_color},FontName={font_name},{ass_border}'"
     filters.append(subtitles_filter)
     
     filter_graph = ",".join(filters)
@@ -389,7 +411,7 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     return True
 
 
-def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small", resolution_cap: str = "original", segmentation_mode: str = "line_by_line") -> str:
+def process_video(input_path: str, target_language: str, alignment: int = 2, font_size: int = 20, font_color: str = "&H00FFFFFF", model_size: str = "small", resolution_cap: str = "original", segmentation_mode: str = "line_by_line", font_name: str = "Arial", border_style: str = "outline", srt_path: str = None) -> str:
     """
     Process the input video by transcribing it, translating the transcript,
     and hardcoding the translated subtitles.
@@ -402,11 +424,15 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
         font_color (str): The subtitle font color (ASS hex format).
         model_size (str): The Whisper model size.
         resolution_cap (str): The video export resolution cap.
+        segmentation_mode (str): The subtitle segmentation timing style.
+        font_name (str): The text font name.
+        border_style (str): Outline or solid background box.
+        srt_path (str): Optional path to an already processed/edited SRT file to bypass transcription.
 
     Returns:
         str: The path to the final output video file, or empty string on failure.
     """
-    print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment}, size: {font_size}, color: {font_color}, resolution_cap: {resolution_cap})")
+    print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment}, size: {font_size}, color: {font_color}, resolution_cap: {resolution_cap}, font_name: {font_name}, border_style: {border_style}, custom_srt: {srt_path})")
     
     if not os.path.exists(input_path):
         print(f"Error: Input file {input_path} does not exist.")
@@ -422,6 +448,14 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
     output_video_path = os.path.join("temp_outputs", f"{filename}_subtitled_{target_language}.mp4")
     
     try:
+        # Check if we should bypass transcription and burn the provided SRT file directly
+        if srt_path and os.path.exists(srt_path):
+            print(f"Bypassing transcription/translation. Hardcoding custom SRT file {srt_path} directly...")
+            burn_success = burn_subtitles(input_path, srt_path, output_video_path, alignment, font_size, font_color, resolution_cap=resolution_cap, font_name=font_name, border_style=border_style)
+            if not burn_success:
+                raise Exception("Subtitle burning failed.")
+            return output_video_path
+
         # Step 1: Transcribe
         transcribe_success = transcribe_video(input_path, raw_srt_path, model_size=model_size, segmentation_mode=segmentation_mode)
         if not transcribe_success:
@@ -433,7 +467,7 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
             raise Exception("Translation failed.")
             
         # Step-3: Burn subtitles with selected styles and resolution cap
-        burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path, alignment, font_size, font_color, resolution_cap=resolution_cap)
+        burn_success = burn_subtitles(input_path, translated_srt_path, output_video_path, alignment, font_size, font_color, resolution_cap=resolution_cap, font_name=font_name, border_style=border_style)
         if not burn_success:
             raise Exception("Subtitle burning failed.")
             
