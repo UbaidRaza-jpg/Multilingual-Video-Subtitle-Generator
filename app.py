@@ -243,12 +243,16 @@ st.markdown(
     }
 
     /* Style closed font selectbox to display its selected value in the selected font family style */
-    .font-select-container div[data-baseweb="select"] span {
-        font-family: inherit !important;
+    div[data-testid="stSelectbox"]:has(label[id^="font-name"]) div[data-baseweb="select"] span {
         font-weight: 600 !important;
     }
-    .font-select-container div[data-baseweb="select"] input {
-        font-family: inherit !important;
+
+    /* Hide Streamlit element wrapper containers that only contain style blocks to prevent layout shifts */
+    div.element-container:has(style) {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     /* Style individual option items inside the detached React portal select dropdown */
@@ -852,9 +856,15 @@ def show_configure_dialog():
                 default_font_preview = st.session_state.get("config_font_selectbox", "Arial")
                     
                 # Setup wrapping container with dynamic font family inline styles
-                st.markdown(f'<div class="font-select-container" style="font-family: \'{default_font_preview}\' !important;">', unsafe_allow_html=True)
+                st.markdown(f"""
+                <style>
+                div[data-testid="stSelectbox"]:has(label[id^="font-name"]) div[data-baseweb="select"] span,
+                div[data-testid="stSelectbox"]:has(label[id^="font-name"]) div[data-baseweb="select"] input {{
+                    font-family: '{default_font_preview}', sans-serif !important;
+                }}
+                </style>
+                """, unsafe_allow_html=True)
                 font_name = st.selectbox("Font Name:", options=FONTS, index=0, key="config_font_selectbox")
-                st.markdown('</div>', unsafe_allow_html=True)
                 
             with col_size:
                 SIZES = {
@@ -1060,9 +1070,15 @@ def show_configure_dialog():
                     ]
                     # Setup wrapping container with dynamic font family inline styles for Edit settings
                     edit_font_preview = st.session_state.get("edit_font_selectbox", st.session_state.params["font_name"])
-                    st.markdown(f'<div class="font-select-container" style="font-family: \'{edit_font_preview}\' !important;">', unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <style>
+                    div[data-testid="stSelectbox"]:has(label[id^="font-name"]) div[data-baseweb="select"] span,
+                    div[data-testid="stSelectbox"]:has(label[id^="font-name"]) div[data-baseweb="select"] input {{
+                        font-family: '{edit_font_preview}', sans-serif !important;
+                    }}
+                    </style>
+                    """, unsafe_allow_html=True)
                     font_name = st.selectbox("Font Name:", options=FONTS, index=FONTS.index(st.session_state.params["font_name"]), key="edit_font_selectbox")
-                    st.markdown('</div>', unsafe_allow_html=True)
                     st.session_state.params["font_name"] = font_name
                     
                 with col_size:
