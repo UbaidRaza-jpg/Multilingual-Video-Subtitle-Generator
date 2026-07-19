@@ -849,13 +849,6 @@ def show_configure_dialog():
                 st.markdown(f'<div class="font-select-container" style="font-family: \'{default_font_preview}\' !important;">', unsafe_allow_html=True)
                 font_name = st.selectbox("Font Name:", options=FONTS, index=0, key="config_font_selectbox")
                 st.markdown('</div>', unsafe_allow_html=True)
-                st.markdown(f"""
-                <div style="background-color: #1E222B; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 8px;">
-                    <span style="font-family: '{font_name}', sans-serif; font-size: 1.1rem; color: #E5E7EB; font-weight: 500;">
-                        {font_name} Style Preview
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
                 
             with col_size:
                 SIZES = {
@@ -879,6 +872,15 @@ def show_configure_dialog():
                 color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
                 color_code = COLORS[color_name]
                 
+            # Full-width Style Preview Banner below Row 1
+            st.markdown(f"""
+            <div style="background-color: #1E222B; padding: 10px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 15px; margin-bottom: 20px; width: 100%;">
+                <span style="font-family: '{font_name}', sans-serif; font-size: 1.25rem; color: #E5E7EB; font-weight: 600;">
+                    {font_name} Style Preview
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+            
             col_align, col_style, col_lang = st.columns(3)
             with col_align:
                 ALIGNMENTS = {
@@ -1056,13 +1058,6 @@ def show_configure_dialog():
                     font_name = st.selectbox("Font Name:", options=FONTS, index=FONTS.index(st.session_state.params["font_name"]), key="edit_font_selectbox")
                     st.markdown('</div>', unsafe_allow_html=True)
                     st.session_state.params["font_name"] = font_name
-                    st.markdown(f"""
-                    <div style="background-color: #1E222B; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 8px;">
-                        <span style="font-family: '{font_name}', sans-serif; font-size: 1.1rem; color: #E5E7EB; font-weight: 500;">
-                            {font_name} Style Preview
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
                     
                 with col_size:
                     SIZES = {
@@ -1092,6 +1087,15 @@ def show_configure_dialog():
                     color_code = COLORS[color_name]
                     st.session_state.params["color_code"] = color_code
                     
+                # Full-width Style Preview Banner below Row 1 (Edit Settings)
+                st.markdown(f"""
+                <div style="background-color: #1E222B; padding: 10px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); text-align: center; margin-top: 15px; margin-bottom: 20px; width: 100%;">
+                    <span style="font-family: '{font_name}', sans-serif; font-size: 1.25rem; color: #E5E7EB; font-weight: 600;">
+                        {font_name} Style Preview
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
+                
                 col_align, col_style, col_res = st.columns(3)
                 with col_align:
                     ALIGNMENTS = {
