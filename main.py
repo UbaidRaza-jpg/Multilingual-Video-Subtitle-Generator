@@ -1,6 +1,5 @@
 import os
 import uuid
-import shutil
 import asyncio
 import time
 import smtplib
@@ -199,11 +198,11 @@ async def upload_video(file: UploadFile = File(...)):
     # Generate a unique task ID
     video_id = str(uuid.uuid4())
     
-    # Save uploaded file to temp path with strict 25MB size limit
+    # Save uploaded file to temp path with strict 200MB size limit
     temp_filename = f"{video_id}{file_ext}"
     temp_filepath = os.path.join(UPLOAD_DIR, temp_filename)
     
-    MAX_SIZE = 25 * 1024 * 1024  # 25 MB
+    MAX_SIZE = 200 * 1024 * 1024  # 200 MB
     total_size = 0
     chunk_size = 1024 * 1024  # 1 MB chunk
     
@@ -221,7 +220,7 @@ async def upload_video(file: UploadFile = File(...)):
                         os.remove(temp_filepath)
                     raise HTTPException(
                         status_code=413,
-                        detail="File too large. Maximum allowed size is 25MB."
+                        detail="File too large. Maximum allowed size is 200MB."
                     )
                 buffer.write(chunk)
     except HTTPException:

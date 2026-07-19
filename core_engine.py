@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 from typing import List, Dict, Any
 from dotenv import load_dotenv
@@ -521,6 +520,7 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
 
 
 if __name__ == "__main__":
+    import sys
     # Standard boilerplate entrypoint
     if len(sys.argv) > 5:
         process_video(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5])
