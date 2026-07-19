@@ -869,15 +869,10 @@ def show_configure_dialog():
                     "Cyan": "&H00FFFF00",
                     "Red": "&H000000FF",
                     "Green": "&H0000FF00",
-                    "Blue": "&H00FF0000",
-                    "Custom Color Picker...": "custom"
+                    "Blue": "&H00FF0000"
                 }
                 color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
-                if COLORS[color_name] == "custom":
-                    chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
-                    color_code = hex_to_ass_color(chosen_hex)
-                else:
-                    color_code = COLORS[color_name]
+                color_code = COLORS[color_name]
                 
             col_align, col_style, col_lang = st.columns(3)
             with col_align:
@@ -1082,15 +1077,14 @@ def show_configure_dialog():
                         "Cyan": "&H00FFFF00",
                         "Red": "&H000000FF",
                         "Green": "&H0000FF00",
-                        "Blue": "&H00FF0000",
-                        "Custom Color Picker...": "custom"
+                        "Blue": "&H00FF0000"
                     }
-                    color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=0)
-                    if COLORS[color_name] == "custom":
-                        chosen_hex = st.color_picker("Choose Color:", "#FFFFFF")
-                        color_code = hex_to_ass_color(chosen_hex)
-                    else:
-                        color_code = COLORS[color_name]
+                    reverse_colors = {v: k for k, v in COLORS.items()}
+                    default_color_code = st.session_state.params.get("color_code", "&H00FFFFFF")
+                    if default_color_code not in reverse_colors:
+                        default_color_code = "&H00FFFFFF"
+                    color_name = st.selectbox("Font Color:", options=list(COLORS.keys()), index=list(COLORS.keys()).index(reverse_colors[default_color_code]))
+                    color_code = COLORS[color_name]
                     st.session_state.params["color_code"] = color_code
                     
                 col_align, col_style, col_res = st.columns(3)
