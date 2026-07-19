@@ -46,15 +46,29 @@ def get_ffmpeg_subtitles_filter_path(srt_path: str) -> str:
     return f"subtitles='{escaped_path}'"
 
 
+# In-memory cache for loaded Whisper models to avoid reload latency
+_WHISPER_MODEL_CACHE = {}
+
+def get_whisper_model(model_size: str):
+    """
+    Retrieves a cached WhisperModel from memory, or instantiates a new one if it is missing.
+    """
+    global _WHISPER_MODEL_CACHE
+    if model_size not in _WHISPER_MODEL_CACHE:
+        print(f"Instantiating and caching new WhisperModel ({model_size}) in memory...")
+        from faster_whisper import WhisperModel
+        # cpu is the default device, int8 compute type is optimized for CPU inference
+        _WHISPER_MODEL_CACHE[model_size] = WhisperModel(model_size, device="cpu", compute_type="int8", cpu_threads=4)
+    else:
+        print(f"Using cached WhisperModel ({model_size}) from memory.")
+    return _WHISPER_MODEL_CACHE[model_size]
+
+
 def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "small", segmentation_mode: str = "line_by_line") -> bool:
     """
     Transcribe audio from video_path and save to output_srt_path using faster-whisper.
     """
-    print(f"Loading faster-whisper model ({model_size})...")
-    from faster_whisper import WhisperModel
-    
-    # cpu is the default device, int8 compute type is optimized for CPU inference
-    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    model = get_whisper_model(model_size)
     
     print(f"Transcribing {video_path} (segmentation: {segmentation_mode})...")
     segments, info = model.transcribe(video_path, beam_size=5, word_timestamps=True)
@@ -384,6 +398,9 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
         "-y",
         "-i", video_path,
         "-vf", filter_graph,
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-crf", "23",
         "-c:a", "copy",
         output_path
     ]
@@ -398,6 +415,9 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
             "-y",
             "-i", video_path,
             "-vf", filter_graph,
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-crf", "23",
             "-c:a", "aac",
             output_path
         ]
