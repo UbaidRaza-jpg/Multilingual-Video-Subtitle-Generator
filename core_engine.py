@@ -46,55 +46,52 @@ def get_ffmpeg_subtitles_filter_path(srt_path: str) -> str:
     return f"subtitles='{escaped_path}'"
 
 
-# In-memory cache for loaded Whisper models to avoid reload latency
-_WHISPER_MODEL_CACHE = {}
-
-def get_whisper_model(model_size: str):
-    """
-    Retrieves a cached WhisperModel from memory, or instantiates a new one if it is missing.
-    """
-    global _WHISPER_MODEL_CACHE
-    if model_size not in _WHISPER_MODEL_CACHE:
-        print(f"Instantiating and caching new WhisperModel ({model_size}) in memory...")
-        from faster_whisper import WhisperModel
-        # cpu is the default device, int8 compute type is optimized for CPU inference
-        _WHISPER_MODEL_CACHE[model_size] = WhisperModel(model_size, device="cpu", compute_type="int8", cpu_threads=4)
-    else:
-        print(f"Using cached WhisperModel ({model_size}) from memory.")
-    return _WHISPER_MODEL_CACHE[model_size]
-
-
 def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "small", segmentation_mode: str = "line_by_line") -> bool:
     """
     Transcribe audio from video_path and save to output_srt_path using faster-whisper.
     """
-    model = get_whisper_model(model_size)
+    print(f"Loading faster-whisper model ({model_size}) into RAM...")
+    from faster_whisper import WhisperModel
     
-    print(f"Transcribing {video_path} (segmentation: {segmentation_mode})...")
-    segments, info = model.transcribe(video_path, beam_size=5, word_timestamps=True)
+    # cpu is the default device, int8 compute type is optimized for CPU inference
+    model = WhisperModel(model_size, device="cpu", compute_type="int8", cpu_threads=4)
     
-    # We must consume the generator to transcribe
-    segments = list(segments)
-    
-    print(f"Detected language '{info.language}' with probability {info.language_probability:.2f}")
-    print(f"Writing raw transcript to {output_srt_path}...")
-    
-    with open(output_srt_path, "w", encoding="utf-8") as f:
-        idx = 1
-        for segment in segments:
-            if segmentation_mode == "word_by_word":
-                if segment.words:
-                    for w in segment.words:
-                        start = format_time(w.start)
-                        end = format_time(w.end)
-                        text = w.word.strip()
+    try:
+        print(f"Transcribing {video_path} (segmentation: {segmentation_mode})...")
+        segments, info = model.transcribe(video_path, beam_size=5, word_timestamps=True)
+        
+        # We must consume the generator to transcribe
+        segments = list(segments)
+        
+        print(f"Detected language '{info.language}' with probability {info.language_probability:.2f}")
+        print(f"Writing raw transcript to {output_srt_path}...")
+        
+        with open(output_srt_path, "w", encoding="utf-8") as f:
+            idx = 1
+            for segment in segments:
+                if segmentation_mode == "word_by_word":
+                    if segment.words:
+                        for w in segment.words:
+                            start = format_time(w.start)
+                            end = format_time(w.end)
+                            text = w.word.strip()
+                            if text:
+                                f.write(f"{idx}\n")
+                                f.write(f"{start} --> {end}\n")
+                                f.write(f"{text}\n\n")
+                                idx += 1
+                    else:
+                        # Fallback
+                        start = format_time(segment.start)
+                        end = format_time(segment.end)
+                        text = segment.text.strip().replace("\n", " ").replace("\r", "")
                         if text:
                             f.write(f"{idx}\n")
                             f.write(f"{start} --> {end}\n")
                             f.write(f"{text}\n\n")
                             idx += 1
                 else:
-                    # Fallback
+                    # line_by_line
                     start = format_time(segment.start)
                     end = format_time(segment.end)
                     text = segment.text.strip().replace("\n", " ").replace("\r", "")
@@ -103,16 +100,13 @@ def transcribe_video(video_path: str, output_srt_path: str, model_size: str = "s
                         f.write(f"{start} --> {end}\n")
                         f.write(f"{text}\n\n")
                         idx += 1
-            else:
-                # line_by_line
-                start = format_time(segment.start)
-                end = format_time(segment.end)
-                text = segment.text.strip().replace("\n", " ").replace("\r", "")
-                if text:
-                    f.write(f"{idx}\n")
-                    f.write(f"{start} --> {end}\n")
-                    f.write(f"{text}\n\n")
-                    idx += 1
+    finally:
+        # Explicitly unload the model and trigger garbage collection to free RAM immediately
+        print("Unloading Whisper model and running garbage collection to reclaim memory...")
+        if 'model' in locals():
+            del model
+        import gc
+        gc.collect()
             
     return True
 

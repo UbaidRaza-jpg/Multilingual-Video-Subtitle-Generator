@@ -591,6 +591,11 @@ def start_over():
     st.session_state.is_processing = False
     st.session_state.is_preparing = False
     st.session_state.srt_blocks = None
+    
+    # Force garbage collection to instantly reclaim memory back to OS
+    import gc
+    gc.collect()
+    
     st.rerun()
 
 
@@ -909,8 +914,8 @@ def show_configure_dialog():
             col_acc, col_res, col_seg = st.columns(3)
             with col_acc:
                 ACCURACY_MODELS = {
-                    "High Accuracy (Recommended)": "small",
-                    "Fast / Standard Accuracy": "base"
+                    "Fast / Standard Accuracy (Recommended)": "base",
+                    "High Accuracy (Requires More RAM)": "small"
                 }
                 accuracy_name = st.selectbox("Accuracy:", options=list(ACCURACY_MODELS.keys()), index=0)
                 model_size_code = ACCURACY_MODELS[accuracy_name]
