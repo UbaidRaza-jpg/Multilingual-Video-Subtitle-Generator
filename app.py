@@ -4,6 +4,12 @@ import uuid
 import requests
 import streamlit as st
 
+# Force immediate output flushing for Streamlit Cloud logs
+import builtins
+def print(*args, **kwargs):
+    kwargs.setdefault('flush', True)
+    builtins.print(*args, **kwargs)
+
 # Configure page settings
 st.set_page_config(
     page_title="Multilingual Video Subtitle Generator",

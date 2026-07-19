@@ -7,6 +7,12 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Force immediate output flushing for Streamlit Cloud logs
+import builtins
+def print(*args, **kwargs):
+    kwargs.setdefault('flush', True)
+    builtins.print(*args, **kwargs)
+
 # Delay importing heavier packages until they are actually needed
 # to ensure faster imports and check dependency presence safely.
 
