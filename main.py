@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from core_engine import process_video, generate_subtitle_preview
 
 app = FastAPI(
@@ -14,6 +15,28 @@ app = FastAPI(
     description="API for transcribing, translating, and hardcoding subtitles into video files locally.",
     version="1.0.0"
 )
+
+# CORS configurations
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Serve Custom Frontend Files
+@app.get("/")
+async def serve_index():
+    return FileResponse("frontend/index.html")
+
+@app.get("/styles.css")
+async def serve_styles():
+    return FileResponse("frontend/styles.css")
+
+@app.get("/main.js")
+async def serve_js():
+    return FileResponse("frontend/main.js")
 
 # Directory configs
 UPLOAD_DIR = "uploads"
@@ -178,6 +201,14 @@ def async_process_video_task(task_id: str, input_path: str, target_language: str
                 os.remove(input_path)
         except Exception as e:
             print(f"Warning: Failed to delete temporary upload file {input_path}: {e}")
+            
+        # Clean up the custom srt file if passed to prevent disk leakage
+        if srt_path:
+            try:
+                if os.path.exists(srt_path):
+                    os.remove(srt_path)
+            except Exception as e:
+                print(f"Warning: Failed to delete temporary custom SRT file {srt_path}: {e}")
 
 
 @app.post("/upload")
@@ -332,6 +363,76 @@ async def process_video_endpoint(
         "task_id": video_id,
         "status": "queued",
         "message": f"Subtitle generation started in the background. Target language: '{target_language}'"
+    }
+
+
+@app.post("/process_custom/{video_id}")
+async def process_custom_video_endpoint(
+    video_id: str,
+    background_tasks: BackgroundTasks,
+    srt_file: UploadFile = File(...),
+    target_language: str = Form(...),
+    alignment: int = Form(2),
+    font_size: int = Form(20),
+    font_color: str = Form("&H00FFFFFF"),
+    email: str = Form(None),
+    model_size: str = Form("small"),
+    resolution_cap: str = Form("original"),
+    segmentation_mode: str = Form("line_by_line"),
+    font_name: str = Form("Arial"),
+    border_style: str = Form("outline")
+):
+    """
+    Step 3 (Custom/Edited): Trigger subtitle burning process using a client-edited SRT file.
+    """
+    if video_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Video not found")
+        
+    task = tasks_db[video_id]
+    if task["status"] in ["queued", "processing", "completed"]:
+        raise HTTPException(status_code=400, detail=f"Task is already in state '{task['status']}'")
+        
+    if not os.path.exists(task["filepath"]):
+        raise HTTPException(status_code=404, detail="Uploaded video file has been cleaned up. Please upload again.")
+
+    # Save custom srt_file to temp_outputs
+    filename = os.path.splitext(task["original_filename"])[0]
+    custom_srt_name = f"{filename}_edited_{uuid.uuid4().hex}.srt"
+    custom_srt_path = os.path.join(OUTPUT_DIR, custom_srt_name)
+    
+    try:
+        content = await srt_file.read()
+        with open(custom_srt_path, "wb") as f:
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save custom SRT file: {str(e)}")
+
+    # Update task details to queued
+    task["status"] = "queued"
+    task["target_language"] = target_language
+
+    # Start task in background using the custom srt path
+    background_tasks.add_task(
+        async_process_video_task, 
+        video_id, 
+        task["filepath"], 
+        target_language, 
+        alignment,
+        font_size,
+        font_color,
+        email,
+        model_size,
+        resolution_cap,
+        segmentation_mode,
+        font_name,
+        border_style,
+        custom_srt_path
+    )
+
+    return {
+        "task_id": video_id,
+        "status": "queued",
+        "message": f"Custom subtitle generation started in the background. Target language: '{target_language}'"
     }
 
 
