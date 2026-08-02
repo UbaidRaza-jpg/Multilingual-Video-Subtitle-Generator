@@ -29,6 +29,18 @@ st.markdown(
         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
+    /* Completely hide Streamlit Cloud system elements */
+    #MainMenu, footer, header {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    
+    /* Make block containers stretch beautifully without empty paddings */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
     /* Gradient Hero Title */
     .hero-title {
         background: -webkit-linear-gradient(135deg, #A855F7 0%, #3B82F6 100%);
