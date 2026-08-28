@@ -997,7 +997,7 @@ def show_configure_dialog():
                         }
                         preview_resp = requests.get(f"{API_URL}/preview/{st.session_state.video_id}", params=params)
                         if preview_resp.status_code == 200:
-                            st.image(preview_resp.content, caption="Approximate layout styling on first frame", use_column_width=True)
+                            st.image(preview_resp.content, caption="Approximate layout styling on first frame", use_container_width=True)
                         else:
                             st.warning("Preview frame could not be loaded from API.")
                     else:
@@ -1015,7 +1015,7 @@ def show_configure_dialog():
                             )
                             if success and os.path.exists(preview_filepath):
                                 with open(preview_filepath, "rb") as f:
-                                    st.image(f.read(), caption="Approximate layout styling on first frame", use_column_width=True)
+                                    st.image(f.read(), caption="Approximate layout styling on first frame", use_container_width=True)
                             else:
                                 st.warning("Preview frame could not be generated locally.")
                 except Exception as e:
