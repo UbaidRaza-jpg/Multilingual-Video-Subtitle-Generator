@@ -1,7 +1,10 @@
 // Multilingual Video Subtitle Generator - Frontend Logic
 document.addEventListener("DOMContentLoaded", () => {
-    // API base URL - Empty string means relative to current domain
-    const API_BASE = "";
+    // API base URL - Set this to your deployed backend API URL (e.g., "https://your-backend.onrender.com")
+    // It will automatically default to local server when testing locally on localhost.
+    const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? ""
+        : "https://your-backend.onrender.com"; // <-- REPLACE WITH YOUR ACTUAL RENDER.COM APP URL ONCE DEPLOYED
 
     // App state machine variables
     let videoId = null;
