@@ -216,7 +216,7 @@ async def upload_video(file: UploadFile = File(...)):
     """
     Step 1: Upload a video file.
     Saves the file to uploads/ directory and returns a video_id.
-    Strictly limits size to 25MB.
+    Strictly limits size to 200MB.
     """
     # Validate file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
