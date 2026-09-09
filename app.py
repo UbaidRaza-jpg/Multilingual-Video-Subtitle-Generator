@@ -17,10 +17,9 @@ st.set_page_config(
     layout="centered"
 )
 
-# Inject custom meta tags and CSS for premium design
+# Inject custom CSS for premium design
 st.markdown(
     """
-    <meta name="google-site-verification" content="F4UPs5_wAIRRVZsRCsarLixdst_ftJ0lkG1vt6UvcyQ" />
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
 
