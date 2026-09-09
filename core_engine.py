@@ -241,31 +241,49 @@ def translate_srt(input_srt_path: str, output_srt_path: str, target_lang: str, b
             print(f"Google Cloud Official API translation failed: {e}. Falling back...")
             translated_texts = []  # reset and fallback
  
-    # Attempt 3: Free googletrans fallback
+    # Attempt 3: Free translation fallback (deep-translator or googletrans)
     if not translated_texts:
-        print("Using free googletrans scraper (default)...")
-        from googletrans import Translator
-        translator = Translator()
-        chunk_size = 40
-        for i in range(0, len(texts_to_translate), chunk_size):
-            chunk = texts_to_translate[i : i + chunk_size]
-            try:
-                translations = translator.translate(chunk, dest=target_lang)
-                if not isinstance(translations, list):
-                    translations = [translations]
-                translated_texts.extend([t.text for t in translations])
-            except Exception as e:
-                print(f"Translation chunk failed: {e}. Retrying line by line...")
-                for text in chunk:
+        try:
+            from deep_translator import GoogleTranslator
+            print("Using deep-translator (GoogleTranslator)...")
+            translator = GoogleTranslator(source='auto', target=target_lang)
+            for text in texts_to_translate:
+                if not text or text.strip() == "":
+                    translated_texts.append("")
+                else:
                     try:
-                        if text.strip() == "":
-                            translated_texts.append("")
-                        else:
-                            t = translator.translate(text, dest=target_lang)
-                            translated_texts.append(t.text)
+                        translated_texts.append(translator.translate(text))
                     except Exception as e_line:
                         print(f"Line translation failed for '{text}': {e_line}")
-                        translated_texts.append(text)  # fallback to original text
+                        translated_texts.append(text)
+        except Exception as e_dt:
+            print(f"deep-translator unavailable or failed: {e_dt}. Trying googletrans...")
+            try:
+                from googletrans import Translator
+                translator = Translator()
+                chunk_size = 40
+                for i in range(0, len(texts_to_translate), chunk_size):
+                    chunk = texts_to_translate[i : i + chunk_size]
+                    try:
+                        translations = translator.translate(chunk, dest=target_lang)
+                        if not isinstance(translations, list):
+                            translations = [translations]
+                        translated_texts.extend([t.text for t in translations])
+                    except Exception as e:
+                        print(f"Translation chunk failed: {e}. Retrying line by line...")
+                        for text in chunk:
+                            try:
+                                if text.strip() == "":
+                                    translated_texts.append("")
+                                else:
+                                    t = translator.translate(text, dest=target_lang)
+                                    translated_texts.append(t.text)
+                            except Exception as e_line:
+                                print(f"Line translation failed for '{text}': {e_line}")
+                                translated_texts.append(text)
+            except Exception as e_gt:
+                print(f"googletrans unavailable or failed: {e_gt}")
+                translated_texts = texts_to_translate
                         
     # Reassemble blocks
     translated_blocks = []

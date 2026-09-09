@@ -1,3 +1,1 @@
-ffmpeg
-fontconfig
-fonts-freefont-ttf
+# No extra system apt packages required (FFmpeg provided via imageio-ffmpeg)

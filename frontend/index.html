@@ -3,7 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multilingual Video Subtitle Generator</title>
+    
+    <!-- Primary Technical SEO Metadata -->
+    <title>Multilingual Video Subtitle Generator | Muhammad Ubaid Raza</title>
+    <meta name="description" content="AI-powered Multilingual Video Subtitle Generator developed by Muhammad Ubaid Raza. Transcribe, translate, edit timelines, and hardcode customizable subtitles into videos using Whisper, FFmpeg, Streamlit, and FastAPI.">
+    <meta name="keywords" content="Muhammad Ubaid Raza, UbaidRaza-jpg, Multilingual Video Subtitle Generator, AI Subtitles, Whisper Transcription, Video Subtitle Editor, Streamlit Subtitle App, FFmpeg Subtitles, Python Subtitle Generator">
+    <meta name="author" content="Muhammad Ubaid Raza">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/">
+
+    <!-- Open Graph Metadata -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Multilingual Video Subtitle Generator | Muhammad Ubaid Raza">
+    <meta property="og:description" content="AI-powered tool to transcribe, translate, edit timelines, and burn subtitles into videos. Created by Muhammad Ubaid Raza.">
+    <meta property="og:url" content="https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/">
+    <meta property="og:site_name" content="Muhammad Ubaid Raza Portfolio">
+
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Multilingual Video Subtitle Generator | Muhammad Ubaid Raza">
+    <meta name="twitter:description" content="AI-powered video subtitle transcription and translation tool by Muhammad Ubaid Raza.">
+    <meta name="twitter:creator" content="@UbaidRaza-jpg">
+
+    <!-- Schema.org JSON-LD Structured Data Graph -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "https://github.com/UbaidRaza-jpg#person",
+          "name": "Muhammad Ubaid Raza",
+          "alternateName": ["UbaidRaza-jpg", "Ubaid Raza"],
+          "jobTitle": "Software Developer & AI Engineer",
+          "alumniOf": {
+            "@type": "EducationalOrganization",
+            "name": "Bahria University Karachi"
+          },
+          "url": "https://github.com/UbaidRaza-jpg",
+          "sameAs": [
+            "https://github.com/UbaidRaza-jpg",
+            "https://www.linkedin.com/in/",
+            "https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/"
+          ],
+          "knowsAbout": [
+            "Artificial Intelligence",
+            "Python Software Engineering",
+            "Video Subtitle Processing",
+            "Speech Recognition",
+            "FastAPI & Streamlit",
+            "C++ Programming"
+          ]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator#software",
+          "name": "Multilingual Video Subtitle Generator",
+          "operatingSystem": "Cross-platform (Linux, Windows, macOS, Web)",
+          "applicationCategory": "MultimediaApplication",
+          "description": "AI-powered web application for speech-to-text video transcription, translation, interactive segment editing, and customizable subtitle hardcoding.",
+          "url": "https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/",
+          "codeRepository": "https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator",
+          "author": {
+            "@type": "Person",
+            "@id": "https://github.com/UbaidRaza-jpg#person",
+            "name": "Muhammad Ubaid Raza"
+          }
+        }
+      ]
+    }
+    </script>
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,6 +83,9 @@
         <header class="hero-header">
             <h1 class="hero-title">Multilingual Video Subtitle Generator</h1>
             <p class="hero-subtitle">Upload a video with speech, translate it into standard foreign languages, and burn customized subtitles onto your output file instantly.</p>
+            <p class="hero-attribution" style="color: #A78BFA; font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">
+                Architected &amp; Built by <strong><a href="https://github.com/UbaidRaza-jpg" target="_blank" rel="noopener" style="color: #60A5FA; text-decoration: none;">Muhammad Ubaid Raza</a></strong>
+            </p>
         </header>
 
         <!-- Main Workspace -->
@@ -27,7 +100,7 @@
                     <input type="file" id="video-file-input" accept=".mp4,.avi,.mkv,.mov" style="display: none;">
                     <div class="dropzone-content">
                         <svg class="upload-large-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-                        <p class="dropzone-text-primary">Drag & drop your video file here</p>
+                        <p class="dropzone-text-primary">Drag &amp; drop your video file here</p>
                         <p class="dropzone-text-secondary">Supports MP4, AVI, MKV, or MOV (Max 200MB)</p>
                         <button type="button" class="btn btn-secondary" onclick="document.getElementById('video-file-input').click()">Browse Files</button>
                     </div>
@@ -45,7 +118,7 @@
             <section id="config-panel" class="card" style="display: none;">
                 <div class="card-header">
                     <svg class="header-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-                    <h2>Subtitle Settings & Styling</h2>
+                    <h2>Subtitle Settings &amp; Styling</h2>
                 </div>
 
                 <form id="config-form">
@@ -80,12 +153,12 @@
                         <div class="form-group">
                             <label for="font-color-select">Font Color:</label>
                             <select id="font-color-select" class="form-control">
-                                <option value="&H00FFFFFF" selected>White</option>
-                                <option value="&H0000FFFF">Yellow</option>
-                                <option value="&H00FFFF00">Cyan</option>
-                                <option value="&H000000FF">Red</option>
-                                <option value="&H0000FF00">Green</option>
-                                <option value="&H00FF0000">Blue</option>
+                                <option value="&amp;H00FFFFFF" selected>White</option>
+                                <option value="&amp;H0000FFFF">Yellow</option>
+                                <option value="&amp;H00FFFF00">Cyan</option>
+                                <option value="&amp;H000000FF">Red</option>
+                                <option value="&amp;H0000FF00">Green</option>
+                                <option value="&amp;H00FF0000">Blue</option>
                             </select>
                         </div>
                     </div>
@@ -125,7 +198,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label handle="target-lang-select" for="target-lang-select">Target Language:</label>
+                            <label for="target-lang-select">Target Language:</label>
                             <select id="target-lang-select" class="form-control">
                                 <option value="en" selected>English (Global)</option>
                                 <option value="es">Spanish (Español)</option>
@@ -182,7 +255,7 @@
                     </div>
 
                     <div class="action-bar">
-                        <button type="button" id="prepare-subtitles-btn" class="btn btn-primary">Prepare & Edit Subtitles</button>
+                        <button type="button" id="prepare-subtitles-btn" class="btn btn-primary">Prepare &amp; Edit Subtitles</button>
                     </div>
                 </form>
             </section>
@@ -239,6 +312,18 @@
                 </div>
             </section>
         </main>
+
+        <!-- Developer Attribution Footer -->
+        <footer style="margin-top: 3rem; padding: 1.5rem 0; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: #9CA3AF; font-size: 0.9rem;">
+            <p style="margin-bottom: 0.5rem;">
+                Created by <strong>Muhammad Ubaid Raza</strong> &bull; BS Information Technology, Bahria University Karachi
+            </p>
+            <p>
+                <a href="https://github.com/UbaidRaza-jpg" target="_blank" rel="noopener" style="color: #60A5FA; margin: 0 8px; text-decoration: none;">GitHub (@UbaidRaza-jpg)</a> |
+                <a href="https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator" target="_blank" rel="noopener" style="color: #A78BFA; margin: 0 8px; text-decoration: none;">Repository</a> |
+                <a href="https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/" target="_blank" rel="noopener" style="color: #34D399; margin: 0 8px; text-decoration: none;">Streamlit Cloud Demo</a>
+            </p>
+        </footer>
     </div>
 
     <!-- Live Processing Orbit Loading Screen Modal -->
