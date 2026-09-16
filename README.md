@@ -123,7 +123,7 @@ streamlit run app.py
 * **LinkedIn**: [Muhammad Ubaid Raza](https://www.linkedin.com/in/)
 * **Flagship Project**: Multilingual Video Subtitle Generator
 * **Live Application**: [Streamlit Cloud Deployment](https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/)
-
+Developed by Muhammad Ubaid Raza.https://ubaidraza-jpg.github.io/portfolio/
 ---
 
 ## 📄 License
