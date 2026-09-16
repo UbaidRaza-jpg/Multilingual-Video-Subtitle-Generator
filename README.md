@@ -10,7 +10,7 @@ The application features an interactive segment timeline editor, advanced stylin
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 * **Interactive Subtitle Timeline Editor**: Review, edit, and adjust transcription and translation segment text directly inside a multi-step modal editor before burning subtitles into the output video.
 * **AI Speech Recognition & Translation**: 
@@ -30,7 +30,7 @@ The application features an interactive segment timeline editor, advanced stylin
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 * **Developer**: **Muhammad Ubaid Raza** ([UbaidRaza-jpg](https://github.com/UbaidRaza-jpg))
 * **Speech Recognition**: `faster-whisper` (Fast CTranslate2 Whisper implementation)
@@ -41,7 +41,7 @@ The application features an interactive segment timeline editor, advanced stylin
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -84,7 +84,7 @@ The application features an interactive segment timeline editor, advanced stylin
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 * [app.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/app.py): Streamlit web application interface with multi-step styling wizard, timeline editor, and export workflow.
 * [core_engine.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/core_engine.py): Core processing pipeline for transcription, translation, SRT parsing, and FFmpeg subtitle burning.
@@ -95,7 +95,7 @@ The application features an interactive segment timeline editor, advanced stylin
 
 ---
 
-## 🏃 How to Run
+## How to Run
 
 ### Option A: Standalone Streamlit Mode (Recommended for Cloud)
 ```bash
@@ -114,7 +114,7 @@ streamlit run app.py
 
 ---
 
-## 👨‍💻 Developer & Author
+## Developer & Author
 
 **Muhammad Ubaid Raza**
 * **Role**: Software Developer & AI/Web Engineering Student
@@ -126,6 +126,6 @@ streamlit run app.py
 * **Developed By**: [Muhammad Ubaid Raza](https://ubaidraza-jpg.github.io/portfolio/)
 ---
 
-## 📄 License
+## License
 
 This project is open-source under the [MIT License](LICENSE).
