@@ -20,7 +20,7 @@ I am Muhammad Ubaid Raza, a Software Developer and BS Information Technology stu
 My primary technical focus centers on AI-driven applications, Python backend development, speech recognition pipelines, systems architecture, and modern web application development. I enjoy building practical, end-to-end software tools that solve real-world problems.
 
 Signature Project:
-• Multilingual Video Subtitle Generator — An AI-powered application that transcribes speech, translates subtitles into foreign languages, allows interactive segment timeline editing, and hardcodes styled captions onto video files. Built using Python, Whisper (faster-whisper), deep-translator, FFmpeg, Streamlit, and FastAPI.
+• Multilingual Video Subtitle Generator: An AI-powered application that transcribes speech, translates subtitles into foreign languages, allows interactive segment timeline editing, and hardcodes styled captions onto video files. Built using Python, Whisper (faster-whisper), deep-translator, FFmpeg, Streamlit, and FastAPI.
 
 Technical Skills:
 • Languages: Python, C++, JavaScript, HTML5/CSS3
