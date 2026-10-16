@@ -6,6 +6,16 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+from security import (
+    validate_font_name,
+    validate_font_color,
+    validate_font_size,
+    validate_alignment,
+    validate_border_style,
+    validate_resolution_cap,
+    validate_language_code
+)
+
 # Force immediate output flushing for Streamlit Cloud logs
 import builtins
 def print(*args, **kwargs):
@@ -333,6 +343,13 @@ def generate_subtitle_preview(video_path: str, alignment: int, font_size: int, f
     Extracts a single frame from video_path at the 1-second mark and burns a 
     sample subtitle onto it at the specified alignment, size, color, font, and border style.
     """
+    # Sanitize and validate all styling parameters to prevent filter injection
+    alignment = validate_alignment(alignment)
+    font_size = validate_font_size(font_size)
+    font_color = validate_font_color(font_color)
+    font_name = validate_font_name(font_name)
+    border_style = validate_border_style(border_style)
+
     print(f"Generating preview for {video_path} with alignment={alignment}, size={font_size}, color={font_color}, font={font_name}, border_style={border_style}...")
     
     # Ensure temp directories exist
@@ -386,6 +403,14 @@ def burn_subtitles(video_path: str, srt_path: str, output_path: str, alignment: 
     """
     Hardcode (burn) subtitles into video_path using ffmpeg with selected alignment, size, color, resolution, font, and border style.
     """
+    # Sanitize and validate all styling and resolution parameters to prevent filter injection
+    alignment = validate_alignment(alignment)
+    font_size = validate_font_size(font_size)
+    font_color = validate_font_color(font_color)
+    font_name = validate_font_name(font_name)
+    border_style = validate_border_style(border_style)
+    resolution_cap = validate_resolution_cap(resolution_cap)
+
     print(f"Burning subtitles from {srt_path} into {video_path} at alignment={alignment}, size={font_size}, color={font_color}, resolution_cap={resolution_cap}, font={font_name}, border_style={border_style}...")
     
     # Build filter graph (scaling first, then drawing subtitles)
@@ -469,6 +494,15 @@ def process_video(input_path: str, target_language: str, alignment: int = 2, fon
     Returns:
         str: The path to the final output video file, or empty string on failure.
     """
+    # Sanitize and validate inputs
+    target_language = validate_language_code(target_language)
+    alignment = validate_alignment(alignment)
+    font_size = validate_font_size(font_size)
+    font_color = validate_font_color(font_color)
+    font_name = validate_font_name(font_name)
+    border_style = validate_border_style(border_style)
+    resolution_cap = validate_resolution_cap(resolution_cap)
+
     print(f"Starting process_video for {input_path} (target language: {target_language}, alignment: {alignment}, size: {font_size}, color: {font_color}, resolution_cap: {resolution_cap}, font_name: {font_name}, border_style: {border_style}, custom_srt: {srt_path})")
     
     if not os.path.exists(input_path):

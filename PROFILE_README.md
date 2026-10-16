@@ -1,4 +1,4 @@
-# Hi there, I'm Muhammad Ubaid Raza 👋
+# Hi there, I'm Muhammad Ubaid Raza
 
 ```
   __  __       _                                      _   _   _ _           _    _____                    
@@ -9,30 +9,30 @@
                                                                           |__/                        
 ```
 
-### 👨‍💻 About Me
+### About Me
 
-I'm **Muhammad Ubaid Raza** (`UbaidRaza-jpg`), a **BS Information Technology student at Bahria University Karachi** and a passionate software developer specializing in **AI Applications, Python, Web Development, C++, and System Architecture**.
+I'm **Muhammad Ubaid Raza** (`UbaidRaza-jpg`), a **BS Information Technology student at Bahria University Karachi** and a software developer specializing in **AI Applications, Python, Web Development, C++, and System Architecture**.
 
-* 🎓 **Education**: BS Information Technology, Bahria University Karachi
-* 🚀 **Core Focus**: AI-powered applications, speech-to-text engines, video processing pipelines, web development
-* 🛠️ **Languages & Tools**: Python, C++, JavaScript, FastAPI, Streamlit, FFmpeg, Whisper, PyTorch, HTML5/CSS3
-* 💼 **LinkedIn**: [Muhammad Ubaid Raza](https://www.linkedin.com/in/)
-* 🐙 **GitHub**: [github.com/UbaidRaza-jpg](https://github.com/UbaidRaza-jpg)
+* **Education**: BS Information Technology, Bahria University Karachi
+* **Core Focus**: AI-powered applications, speech-to-text engines, video processing pipelines, web development
+* **Languages & Tools**: Python, C++, JavaScript, FastAPI, Streamlit, FFmpeg, Whisper, PyTorch, HTML5/CSS3
+* **LinkedIn**: [Muhammad Ubaid Raza](https://www.linkedin.com/in/)
+* **GitHub**: [github.com/UbaidRaza-jpg](https://github.com/UbaidRaza-jpg)
 
 ---
 
-### 🔥 Flagship Project
+### Flagship Project
 
-#### 🎬 [Multilingual Video Subtitle Generator](https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator)
+#### [Multilingual Video Subtitle Generator](https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator)
 An AI-powered web application that transcribes speech, translates subtitles into multiple languages, and hardcodes customizable styled subtitles onto uploaded videos.
 
-* 🌐 **Live Demo**: [built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app](https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/)
-* ⚙️ **Tech Stack**: Python, Whisper (`faster-whisper`), `deep-translator`, `FFmpeg`, `Streamlit`, `FastAPI`
-* 📌 **Key Capabilities**: Interactive timeline editor, word-by-word timing, Netflix-style bounding box styling, bilingual dual-stacked subtitles, independent `.srt` export.
+* **Live Demo**: [built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app](https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/)
+* **Tech Stack**: Python, Whisper (`faster-whisper`), `deep-translator`, `FFmpeg`, `Streamlit`, `FastAPI`
+* **Key Capabilities**: Interactive timeline editor, word-by-word timing, Netflix-style bounding box styling, bilingual dual-stacked subtitles, independent `.srt` export.
 
 ---
 
-### 🌐 Connect & Reach Me
+### Connect & Reach Me
 
 - **GitHub**: [@UbaidRaza-jpg](https://github.com/UbaidRaza-jpg)
 - **LinkedIn**: [Muhammad Ubaid Raza](https://www.linkedin.com/in/)

@@ -1,4 +1,4 @@
-# Multilingual Video Subtitle Generator 🎬
+# Multilingual Video Subtitle Generator
 
 ![Author](https://img.shields.io/badge/Developed%20By-Muhammad%20Ubaid%20Raza-purple?style=for-the-badge&logo=github)
 ![Live Demo](https://img.shields.io/badge/Streamlit%20Cloud-Live%20Demo-red?style=for-the-badge&logo=streamlit)
@@ -71,8 +71,10 @@ The application features an interactive segment timeline editor, advanced stylin
    ```
 
 4. **Environment Configuration** *(Optional)*:
-   Create a `.env` file in the project root to set API keys and SMTP credentials:
+   Create a `.env` file in the project root to set API keys and SMTP credentials (refer to `.env.example`):
    ```env
+   ADMIN_API_KEY=your_secure_admin_token
+   ALLOWED_ORIGINS=http://localhost:8000,http://localhost:8501
    GROQ_API_KEY=your_groq_api_key
    GEMINI_API_KEY=your_gemini_api_key
    SMTP_HOST=smtp.gmail.com
@@ -88,8 +90,9 @@ The application features an interactive segment timeline editor, advanced stylin
 
 * [app.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/app.py): Streamlit web application interface with multi-step styling wizard, timeline editor, and export workflow.
 * [core_engine.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/core_engine.py): Core processing pipeline for transcription, translation, SRT parsing, and FFmpeg subtitle burning.
-* [main.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/main.py): FastAPI REST backend exposing endpoints for multi-user API mode.
-* [frontend/](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/frontend): Modern single-page web client interface built with HTML5, CSS3, and JavaScript.
+* [main.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/main.py): Production-hardened FastAPI REST backend with rate limiting, input sanitization, security headers, and authenticated admin routes.
+* [security.py](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/security.py): Security utilities for password hashing (PBKDF2-HMAC-SHA256), token verification, input validation, and sliding-window rate limiting.
+* [frontend/](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/frontend): Modern single-page web client interface built with HTML5, CSS3, and JavaScript with XSS defense.
 * [requirements.txt](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/requirements.txt): Python package requirements.
 * [packages.txt](file:///c:/Users/ubaid/Desktop/Multilingual-Video-Subtitle-Generator/packages.txt): Cloud container package manifest.
 
@@ -105,7 +108,7 @@ streamlit run app.py
 ### Option B: Full API Mode (FastAPI + Streamlit)
 1. **Start backend API**:
    ```bash
-   uvicorn main:app --reload
+   uvicorn main:app
    ```
 2. **Start Streamlit frontend**:
    ```bash

@@ -214,12 +214,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Render timeline segments in editor
+    // HTML entity escaping helper for XSS defense
+    function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Render timeline segments in editor safely without innerHTML string interpolation
     function renderEditorTimeline(blocks) {
         timelineList.innerHTML = "";
 
         if (blocks.length === 0) {
-            timelineList.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-secondary);">No speech detected in this video. You can type manual segments or skip.</div>`;
+            const emptyNotice = document.createElement("div");
+            emptyNotice.style.textAlign = "center";
+            emptyNotice.style.padding = "20px";
+            emptyNotice.style.color = "var(--text-secondary)";
+            emptyNotice.textContent = "No speech detected in this video. You can type manual segments or skip.";
+            timelineList.appendChild(emptyNotice);
             return;
         }
 
@@ -228,15 +244,28 @@ document.addEventListener("DOMContentLoaded", () => {
             card.className = "timeline-card";
             card.dataset.index = block.index;
 
-            card.innerHTML = `
-                <div class="segment-index">${block.index}</div>
-                <div>
-                    <input type="text" class="segment-time-input" value="${block.timestamp}" />
-                </div>
-                <div>
-                    <textarea class="segment-text-input" rows="2">${block.text}</textarea>
-                </div>
-            `;
+            const indexCol = document.createElement("div");
+            indexCol.className = "segment-index";
+            indexCol.textContent = block.index;
+
+            const timeCol = document.createElement("div");
+            const timeInput = document.createElement("input");
+            timeInput.type = "text";
+            timeInput.className = "segment-time-input";
+            timeInput.value = block.timestamp || "";
+            timeCol.appendChild(timeInput);
+
+            const textCol = document.createElement("div");
+            const textArea = document.createElement("textarea");
+            textArea.className = "segment-text-input";
+            textArea.rows = 2;
+            textArea.value = block.text || "";
+            textCol.appendChild(textArea);
+
+            card.appendChild(indexCol);
+            card.appendChild(timeCol);
+            card.appendChild(textCol);
+
             timelineList.appendChild(card);
         });
     }

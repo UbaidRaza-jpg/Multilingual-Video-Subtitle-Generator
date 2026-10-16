@@ -374,12 +374,16 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
         return
         
     try:
+        import html
         import smtplib
         from email.mime.multipart import MIMEMultipart
         from email.mime.text import MIMEText
         
+        safe_filename = html.escape(str(original_filename or "video"))
+        safe_error = html.escape(str(error_reason or "Unknown error"))
+
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Subtitle Task: {original_filename} - {status.upper()}"
+        msg["Subject"] = f"Subtitle Task: {safe_filename} - {status.upper()}"
         msg["From"] = from_email
         msg["To"] = to_email
         
@@ -392,7 +396,7 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
                         Subtitle Generation Complete!
                     </h2>
                     <p style="font-size: 15px; line-height: 1.6; margin-top: 20px; color: #4B5563;">
-                        Your video <strong>{original_filename}</strong> has been successfully subtitled.
+                        Your video <strong>{safe_filename}</strong> has been successfully subtitled.
                     </p>
                     <div style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 18px 20px; border-radius: 0 12px 12px 0; margin: 25px 0;">
                         <p style="font-size: 14.5px; line-height: 1.6; color: #1E3A8A; margin: 0;">
@@ -419,10 +423,10 @@ def send_standalone_email(to_email: str, status: str, original_filename: str, er
             <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #374151; background-color: #F3F4F6; margin: 0;">
                 <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #E5E7EB;">
                     <h2 style="color: #EF4444; border-bottom: 2px solid #E5E7EB; padding-bottom: 12px; margin-top: 0;">Subtitle Generation Failed</h2>
-                    <p style="font-size: 15px; line-height: 1.6; color: #374151;">Unfortunately, processing your video <strong>{original_filename}</strong> ran into an error.</p>
+                    <p style="font-size: 15px; line-height: 1.6; color: #374151;">Unfortunately, processing your video <strong>{safe_filename}</strong> ran into an error.</p>
                     <p style="font-size: 15px; line-height: 1.6;"><strong>Error Reason:</strong></p>
                     <blockquote style="background: #F9FAFB; border-left: 4px solid #EF4444; margin: 1.5em 0; padding: 12px 16px; border-radius: 0 8px 8px 0;">
-                        <code style="font-family: monospace; color: #EF4444;">{error_reason}</code>
+                        <code style="font-family: monospace; color: #EF4444;">{safe_error}</code>
                     </blockquote>
                     <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;" />
                     <p style="font-size: 12px; color: #9CA3AF; text-align: center;">This is an automated notification from the Multilingual Video Subtitle Generator.</p>
