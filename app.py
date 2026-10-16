@@ -41,11 +41,9 @@ st.markdown(
         padding-bottom: 2rem !important;
     }
 
-    /* Gradient Hero Title */
+    /* Clean Hero Title */
     .hero-title {
-        background: -webkit-linear-gradient(135deg, #A855F7 0%, #3B82F6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #F8FAFC;
         font-weight: 800;
         font-size: 2.6rem;
         text-align: center;
@@ -56,7 +54,7 @@ st.markdown(
     }
 
     .hero-subtitle {
-        color: #9CA3AF;
+        color: #94A3B8;
         font-size: 1.05rem;
         text-align: center;
         margin-bottom: 2rem;
@@ -64,25 +62,25 @@ st.markdown(
         line-height: 1.5;
     }
 
-    /* Dialog Style Overrides (Glassmorphism + Dark Mode) */
+    /* Dialog Style Overrides (Dark Mode) */
     div[role="dialog"] {
-        background-color: #161922 !important;
+        background-color: #111827 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 20px !important;
+        border-radius: 16px !important;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
         padding: 30px !important;
     }
 
     div[role="dialog"] h1, div[role="dialog"] h2, div[role="dialog"] h3 {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        color: white !important;
+        color: #F8FAFC !important;
     }
 
     /* Sleek Card Headers */
     .custom-card-header {
         font-weight: 700;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        color: #FFFFFF;
+        color: #F8FAFC;
         font-size: 1.35rem;
         margin-top: 0.5rem;
         margin-bottom: 1rem;
@@ -91,77 +89,74 @@ st.markdown(
 
     /* File Uploader Container */
     div[data-testid="stFileUploader"] {
-        background: rgba(26, 29, 36, 0.6) !important;
-        border: 2px dashed rgba(168, 85, 247, 0.35) !important;
-        border-radius: 16px !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        border: 2px dashed rgba(255, 255, 255, 0.15) !important;
+        border-radius: 14px !important;
         padding: 40px 24px !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+        transition: border-color 0.2s ease, background-color 0.2s ease !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
         text-align: center;
     }
 
     div[data-testid="stFileUploader"]:hover {
         border-color: #3B82F6 !important;
-        background: rgba(26, 29, 36, 0.8) !important;
-        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.12) !important;
+        background: rgba(15, 23, 42, 0.85) !important;
     }
 
     /* Buttons restyling */
     div.stButton > button {
-        background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%) !important;
+        background: #2563EB !important;
         color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 14px 28px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
         font-weight: 600 !important;
-        font-size: 1.05rem !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3) !important;
+        font-size: 1rem !important;
+        transition: background-color 0.2s ease, border-color 0.2s ease !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
         width: 100% !important;
         margin-top: 15px;
     }
 
     div.stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.45) !important;
-        background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%) !important;
+        background: #1D4ED8 !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
     }
 
     div.stButton > button:active {
-        transform: translateY(1px) !important;
+        background: #1E40AF !important;
     }
 
     /* Download button */
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
-        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3) !important;
-        border-radius: 12px !important;
-        padding: 14px 28px !important;
+        background: #059669 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
         font-weight: 600 !important;
-        font-size: 1.05rem !important;
-        transition: all 0.3s ease !important;
+        font-size: 1rem !important;
+        transition: background-color 0.2s ease !important;
         width: 100% !important;
     }
 
     .stDownloadButton > button:hover {
-        background: linear-gradient(135deg, #34D399 0%, #10B981 100%) !important;
-        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45) !important;
-        transform: translateY(-2px) !important;
+        background: #047857 !important;
     }
 
     /* Custom selectboxes/inputs */
     div[data-baseweb="select"] > div {
-        background-color: #1A1D24 !important;
+        background-color: #111827 !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         color: white !important;
         padding: 2px 4px !important;
     }
 
     div[data-baseweb="input"] {
-        background-color: #1A1D24 !important;
+        background-color: #111827 !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         padding: 2px 4px !important;
     }
     
@@ -171,76 +166,60 @@ st.markdown(
     
     /* Sleek status banners */
     div.stAlert {
-        background-color: rgba(26, 29, 36, 0.7) !important;
+        background-color: rgba(17, 24, 39, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 14px !important;
+        border-radius: 10px !important;
         color: white !important;
-        backdrop-filter: blur(8px);
     }
     
     /* Sleek divider */
     hr {
         border-color: rgba(255, 255, 255, 0.08) !important;
-        margin: 2.5rem 0 !important;
+        margin: 2rem 0 !important;
     }
     
     /* Captions */
     .stCaption {
-        color: #6B7280 !important;
+        color: #94A3B8 !important;
         font-weight: 300;
         text-align: center;
-        margin-top: 2rem;
+        margin-top: 1.5rem;
     }
 
-    /* Orbit Loader Spinner */
+    /* Clean Spinner Container */
     .loader-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 45px 25px;
-        background: rgba(26, 29, 36, 0.6) !important;
+        padding: 35px 25px;
+        background: #111827 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 20px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-        margin: 30px auto !important;
-        max-width: 450px !important;
-        backdrop-filter: blur(12px) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        margin: 25px auto !important;
+        max-width: 420px !important;
     }
     
-    .orbit-spinner {
-        position: relative;
-        width: 80px;
-        height: 80px;
-        margin-bottom: 25px;
-    }
-    
-    .orbit-ball {
-        position: absolute;
-        width: 14px;
-        height: 14px;
+    .clean-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #3B82F6;
         border-radius: 50%;
-        background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%) !important;
-        box-shadow: 0 0 15px rgba(168, 85, 247, 0.7) !important;
-        animation: orbit-animation 1.6s infinite linear !important;
+        animation: spinner-rotate 0.8s linear infinite;
+        margin-bottom: 18px;
     }
-    
-    .ball-1 { animation-delay: 0s; transform: rotate(0deg) translate(30px) rotate(0deg); }
-    .ball-2 { animation-delay: 0.53s; transform: rotate(120deg) translate(30px) rotate(-120deg); }
-    .ball-3 { animation-delay: 1.06s; transform: rotate(240deg) translate(30px) rotate(-240deg); }
 
-    @keyframes orbit-animation {
-        0% {
-            transform: rotate(0deg) translate(30px) rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg) translate(30px) rotate(-360deg);
+    @keyframes spinner-rotate {
+        to {
+            transform: rotate(360deg);
         }
     }
     
     .loader-title {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        color: #FFFFFF !important;
+        color: #F8FAFC !important;
         font-size: 1.15rem !important;
         font-weight: 700 !important;
         margin-bottom: 6px !important;
@@ -249,7 +228,7 @@ st.markdown(
     
     .loader-subtitle {
         font-family: 'Outfit', sans-serif !important;
-        color: #9CA3AF !important;
+        color: #94A3B8 !important;
         font-size: 0.9rem !important;
         font-weight: 300 !important;
     }
@@ -343,16 +322,12 @@ def hex_to_ass_color(hex_str: str) -> str:
 
 def render_orbit_loader(title: str, subtitle: str):
     """
-    Renders a custom CSS animated orbit spinner with title and subtitle labels.
+    Renders a custom CSS animated clean circular spinner with title and subtitle labels.
     """
     st.markdown(
         f"""
         <div class="loader-container">
-            <div class="orbit-spinner">
-                <div class="orbit-ball ball-1"></div>
-                <div class="orbit-ball ball-2"></div>
-                <div class="orbit-ball ball-3"></div>
-            </div>
+            <div class="clean-spinner"></div>
             <div class="loader-title">{title}</div>
             <div class="loader-subtitle">{subtitle}</div>
         </div>
@@ -1298,4 +1273,12 @@ elif st.session_state.step == "download":
 
 
 st.divider()
-st.caption("Powered by faster-whisper, googletrans, and ffmpeg locally.")
+st.markdown(
+    """
+    <div style="text-align: center; color: #64748B; font-size: 0.85rem; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+        <p style="margin-bottom: 0.4rem; color: #94A3B8;">Multilingual Video Subtitle Generator &bull; Developed by Muhammad Ubaid Raza</p>
+        <p><a href="https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator" target="_blank" style="color: #38BDF8; text-decoration: none; margin: 0 8px;">GitHub Repository</a> &bull; <a href="https://ubaidraza-jpg.github.io/portfolio/" target="_blank" style="color: #38BDF8; text-decoration: none; margin: 0 8px;">Portfolio</a></p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
