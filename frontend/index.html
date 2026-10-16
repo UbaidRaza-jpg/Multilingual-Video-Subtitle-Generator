@@ -79,14 +79,13 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="stars"></div>
     <div class="container">
         <!-- Hero Header -->
         <header class="hero-header">
             <h1 class="hero-title">Multilingual Video Subtitle Generator</h1>
             <p class="hero-subtitle">Upload a video with speech, translate it into standard foreign languages, and burn customized subtitles onto your output file instantly.</p>
-            <p class="hero-attribution" style="color: #A78BFA; font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">
-                Architected &amp; Built by <strong><a href="https://github.com/UbaidRaza-jpg" target="_blank" rel="noopener" style="color: #60A5FA; text-decoration: none;">Muhammad Ubaid Raza</a></strong>
+            <p class="hero-attribution" style="color: var(--text-secondary); font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">
+                Architected &amp; Built by <strong><a href="https://github.com/UbaidRaza-jpg" target="_blank" rel="noopener" style="color: #38BDF8; text-decoration: none;">Muhammad Ubaid Raza</a></strong>
             </p>
         </header>
 
@@ -315,27 +314,27 @@
             </section>
         </main>
 
-        <!-- Developer Attribution Footer -->
-        <footer style="margin-top: 3rem; padding: 1.5rem 0; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: #9CA3AF; font-size: 0.9rem;">
-            <p style="margin-bottom: 0.5rem;">
+        <!-- Developer Attribution & Legal Footer -->
+        <footer style="margin-top: 3rem; padding: 1.5rem 0; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: #94A3B8; font-size: 0.9rem;">
+            <p style="margin-bottom: 0.6rem;">
                 Created by <strong>Muhammad Ubaid Raza</strong> &bull; BS Information Technology, Bahria University Karachi
             </p>
-            <p>
-                <a href="https://github.com/UbaidRaza-jpg" target="_blank" rel="noopener" style="color: #60A5FA; margin: 0 8px; text-decoration: none;">GitHub (@UbaidRaza-jpg)</a> |
-                <a href="https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator" target="_blank" rel="noopener" style="color: #A78BFA; margin: 0 8px; text-decoration: none;">Repository</a> |
+            <p style="margin-bottom: 0.6rem;">
+                <a href="https://github.com/UbaidRaza-jpg" target="_blank" rel="noopener" style="color: #38BDF8; margin: 0 8px; text-decoration: none;">GitHub (@UbaidRaza-jpg)</a> |
+                <a href="https://github.com/UbaidRaza-jpg/Multilingual-Video-Subtitle-Generator" target="_blank" rel="noopener" style="color: #94A3B8; margin: 0 8px; text-decoration: none;">Repository</a> |
                 <a href="https://built-by-ubaid-multilingual-video-subtitle-generator.streamlit.app/" target="_blank" rel="noopener" style="color: #34D399; margin: 0 8px; text-decoration: none;">Streamlit Cloud Demo</a>
+            </p>
+            <p style="font-size: 0.8rem; color: #64748B;">
+                <a href="privacy.html" style="color: #94A3B8; text-decoration: none; margin: 0 6px;">Privacy Policy</a> &bull;
+                <a href="terms.html" style="color: #94A3B8; text-decoration: none; margin: 0 6px;">Terms and Conditions</a>
             </p>
         </footer>
     </div>
 
-    <!-- Live Processing Orbit Loading Screen Modal -->
+    <!-- Live Processing Spinner Modal -->
     <div id="loading-overlay" class="modal-overlay" style="display: none;">
         <div class="loader-container">
-            <div class="orbit-spinner">
-                <div class="orbit-ball ball-1"></div>
-                <div class="orbit-ball ball-2"></div>
-                <div class="orbit-ball ball-3"></div>
-            </div>
+            <div class="clean-spinner"></div>
             <div class="loader-title" id="loading-title">Processing</div>
             <div class="loader-subtitle" id="loading-subtitle">Please wait while the server processes your request...</div>
         </div>
