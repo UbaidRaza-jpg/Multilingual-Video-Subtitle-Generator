@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#0E111A"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#1E293B" stroke-width="2"/>
+  
+  <!-- Video Display Screen Outline -->
+  <rect x="10" y="12" width="44" height="28" rx="6" fill="#161922" stroke="#2563EB" stroke-width="2"/>
+  
+  <!-- Play Indicator -->
+  <polygon points="30,21 38,26 30,31" fill="#3B82F6"/>
+  
+  <!-- Subtitle Text Representation Bars -->
+  <rect x="14" y="46" width="22" height="3" rx="1.5" fill="#38BDF8"/>
+  <rect x="39" y="46" width="11" height="3" rx="1.5" fill="#64748B"/>
+  <rect x="14" y="52" width="36" height="3" rx="1.5" fill="#94A3B8"/>
+</svg>
