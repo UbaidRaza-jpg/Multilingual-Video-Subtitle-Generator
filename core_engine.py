@@ -23,6 +23,24 @@ def print(*args, **kwargs):
     builtins.print(*args, **kwargs)
 
 # Delay importing heavier packages until they are actually needed
+# Compatibility patch for PyAV >= 18 breaking change with faster-whisper
+try:
+    import av
+    _orig_av_open = av.open
+
+    def _safe_av_open(*args, **kwargs):
+        try:
+            return _orig_av_open(*args, **kwargs)
+        except TypeError as err:
+            if "metadata_errors" in str(err) and "metadata_errors" in kwargs:
+                kwargs.pop("metadata_errors", None)
+                return _orig_av_open(*args, **kwargs)
+            raise
+
+    av.open = _safe_av_open
+except Exception:
+    pass
+
 # to ensure faster imports and check dependency presence safely.
 
 def format_time(seconds: float) -> str:
