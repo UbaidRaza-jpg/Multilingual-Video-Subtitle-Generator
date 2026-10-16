@@ -220,6 +220,21 @@ async def serve_styles():
 async def serve_js():
     return FileResponse("frontend/main.js")
 
+@app.get("/favicon.svg")
+@app.get("/favicon.ico")
+async def serve_favicon():
+    return FileResponse("frontend/favicon.svg", media_type="image/svg+xml")
+
+@app.get("/privacy")
+@app.get("/privacy.html")
+async def serve_privacy():
+    return FileResponse("frontend/privacy.html")
+
+@app.get("/terms")
+@app.get("/terms.html")
+async def serve_terms():
+    return FileResponse("frontend/terms.html")
+
 
 # Directory configs
 UPLOAD_DIR = "uploads"
