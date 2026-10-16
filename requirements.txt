@@ -8,3 +8,4 @@ faster-whisper
 fastapi
 uvicorn
 python-multipart
+av<18.0.0
